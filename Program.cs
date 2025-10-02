@@ -1,4 +1,3 @@
-
 namespace FintechStatsPlatform
 {
     public class Program
