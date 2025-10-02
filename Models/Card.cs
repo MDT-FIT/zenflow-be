@@ -24,9 +24,5 @@ namespace FintechStatsPlatform.Models
 
         public string LastFour { get { return lastFour; } set { lastFour = value; } }
 
-
-        public void replenish(long number) { }
-
-        public void withdraw(long number) { }
     }
 }
