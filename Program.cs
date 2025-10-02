@@ -1,3 +1,9 @@
+<<<<<<< Updated upstream
+=======
+using FintechStatsPlatform.Models;
+using Microsoft.EntityFrameworkCore;
+
+>>>>>>> Stashed changes
 namespace FintechStatsPlatform
 {
     public class Program
@@ -5,6 +11,11 @@ namespace FintechStatsPlatform
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddDbContextPool<FintechContext>(opt =>
+            opt.UseNpgsql(
+                builder.Configuration.GetConnectionString(nameof(FintechContext)),
+                o => o.SetPostgresVersion(17, 0)));
 
             // Add services to the container.
 

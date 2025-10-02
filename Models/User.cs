@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FintechStatsPlatform.Models
 {
@@ -6,7 +8,9 @@ namespace FintechStatsPlatform.Models
     {
         public string Username { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
         public string[] AccountIds { get; set; }
+
+        public ICollection<BankAccount> Accounts {get; set;}
     }
 }
