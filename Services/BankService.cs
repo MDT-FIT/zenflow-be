@@ -10,7 +10,6 @@ namespace FintechStatsPlatform.Services
         private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
 
-
         public BankService(string clientId, string clientSecret)
         {
             _clientId = clientId;
