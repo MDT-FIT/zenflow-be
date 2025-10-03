@@ -1,3 +1,5 @@
+using FintechStatsPlatform.Enumirators;
+
 namespace FintechStatsPlatform.Models
 {
     public class User : AbstractEntity
