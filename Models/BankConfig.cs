@@ -4,6 +4,12 @@ namespace FintechStatsPlatform.Models
 {
     public class BankConfig : AbstractEntity
     {
+
+        public BankConfig(string apiLink) 
+        {
+            this.apiLink = apiLink; 
+        }
+
         private BankName bankName;
 
         public BankName BankName { get { return bankName; }  set { bankName = value; } }
@@ -23,10 +29,6 @@ namespace FintechStatsPlatform.Models
         private string logo;
 
         public string Logo { get { return logo; } set { logo = value; } }
-
-        private bool isEnabled;
-
-        public bool IsEnabled { get { return isEnabled; } set { isEnabled = value; } }
 
     }
 }
