@@ -14,7 +14,8 @@ namespace FintechStatsPlatform
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddDbContextPool<FintechContext>(opt =>
-                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))); 
+
             var clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID");
             var clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET");
             var secret_key = Environment.GetEnvironmentVariable("SECRET_KEY");
