@@ -22,7 +22,7 @@ namespace FintechStatsPlatform.Models
 
         public bool isBankConnected(BankName queryBank)
         {
-            if (accountIds.Any(bank => bank.StartsWith(bankNamesKeyValuePairs[queryBank])))
+            if (AccountIds.Any(bank => bank.StartsWith(bankNamesKeyValuePairs[queryBank])))
                 return true;
             return false;
         }
