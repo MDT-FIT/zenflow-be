@@ -33,7 +33,7 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .Property(u => u.AccountIds)
                 .HasColumnName("account_id")
                 .HasColumnType("varchar(100)[]")
-                .HasDefaultValue(Array.Empty<string>());
+                .HasDefaultValueSql("'{}'::varchar[]");
 
             builder
                 .Property(u => u.UpdatedAt)
