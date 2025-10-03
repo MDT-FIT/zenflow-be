@@ -2,6 +2,7 @@
 using FintechStatsPlatform.Models;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
+using System.Net.Http.Headers;
 
 namespace FintechStatsPlatform.Services
 {
@@ -24,7 +25,6 @@ namespace FintechStatsPlatform.Services
             _cache = cache;
             _tinkConfig = new BankConfig(tinkLink);
         }
-
 
         public  List<Transaction> listTransactions(TransactionFilter filter) 
         {
@@ -57,25 +57,39 @@ namespace FintechStatsPlatform.Services
 
         public  void connectMono() { }
 
-        public void connectOtherBank(string userId)
+        public async void connectOtherBank(string userId, string accountVerificationId)
         {
-            
-        }
-        public string GetTinkAccessToken()
-        {
-            // спробуємо взяти з кешу
-            if (_cache.TryGetValue("TinkAccessToken", out string token))
+            string token = GetTinkAccessToken("account-verification-reports:read");
+            using (var client = new HttpClient())
             {
-                return token;
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var response =  await _httpClient.GetAsync($"api/v1/account-verification-reports/{userId}");
+                var json = response.Content.ReadAsStringAsync().Result;
+
+                var doc = JsonDocument.Parse(json);
+                var accounts = doc.RootElement.GetProperty("accounts");
+
+                List<Account> userAccountsList = new List<Account>();
+                foreach (var tinkAccounts in accounts.EnumerateArray())
+                { 
+                    string id = tinkAccounts.GetProperty("id").GetString();
+                    string fullBankId = User.bankNamesKeyValuePairs[Enumirators.BankName.OTHER].Concat(id).ToString();
+                    userAccountsList.Add(new Account(userId, fullBankId));
+                }
+                // зберігаємо в базі всі банківські акаунти юзера
             }
+
+        }
+        public string GetTinkAccessToken(string scope)
+        {
 
             // якщо немає у кеші → робимо запит
             var content = new FormUrlEncodedContent(new[]
             {
-            new KeyValuePair<string, string>("client_id", _clientId),
-            new KeyValuePair<string, string>("client_secret", _clientSecret),
-            new KeyValuePair<string, string>("grant_type", "client_credentials"),
-            new KeyValuePair<string, string>("scope", "authorization:grant,user:create"),
+                new KeyValuePair<string, string>("client_id", _clientId),
+                new KeyValuePair<string, string>("client_secret", _clientSecret),
+                new KeyValuePair<string, string>("grant_type", "client_credentials"),
+                new KeyValuePair<string, string>("scope", scope),
             });
 
             var response = _httpClient.PostAsync("https://api.tink.com/api/v1/oauth/token", content).Result;
@@ -83,11 +97,8 @@ namespace FintechStatsPlatform.Services
             var json = response.Content.ReadAsStringAsync().Result;
 
             using var doc = JsonDocument.Parse(json);
-            token = doc.RootElement.GetProperty("access_token").GetString();
+            var token = doc.RootElement.GetProperty("access_token").GetString();
             int expiresIn = doc.RootElement.GetProperty("expires_in").GetInt32(); // сек
-
-            // кладемо в кеш з TTL (трошки менше, ніж реальний)
-            _cache.Set("TinkAccessToken", token, TimeSpan.FromSeconds(expiresIn - 60));
 
             return token;
         }

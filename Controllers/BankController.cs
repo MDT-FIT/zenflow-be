@@ -18,7 +18,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet("get-tink-token")]
         public IActionResult getTinkAccesssToken()
         {
-            var tokenJson =  _bankService.GetTinkAccessToken();
+            var tokenJson =  _bankService.GetTinkAccessToken("authorization:grant,user:create");
             return Ok(tokenJson); // повертаємо JSON як рядок
         }
 
@@ -27,6 +27,13 @@ namespace FintechStatsPlatform.Controllers
         {
            
             return Ok(_bankService.listBankConfigs(userId));
+        }
+
+        [HttpPost("connect-other-bank/{accountVerificationId}")]
+        public IActionResult connectOtherBank(string userId, [FromRoute] string accountVerificationId) 
+        {
+            _bankService.connectOtherBank(userId, accountVerificationId);
+            return Ok();
         }
     }
 }
