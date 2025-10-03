@@ -1,3 +1,5 @@
+using FintechStatsPlatform.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace FintechStatsPlatform
 {
@@ -6,6 +8,9 @@ namespace FintechStatsPlatform
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddDbContextPool<FintechContext>(opt =>
+                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Add services to the container.
 
@@ -30,7 +35,21 @@ namespace FintechStatsPlatform
 
             app.MapControllers();
 
-            app.Run();
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<FintechContext>();
+
+                if (db.Database.CanConnect())
+                {
+                    Console.WriteLine("Database connection successful"); ;
+                }
+                else
+                {
+                    Console.WriteLine("Failed to connect to the database");
+                }
+            }
+
+                app.Run();
         }
     }
 }

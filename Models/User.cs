@@ -1,24 +1,13 @@
-﻿using FintechStatsPlatform.Enumirators;
-
 namespace FintechStatsPlatform.Models
 {
     public class User : AbstractEntity
     {
-        private string userName;
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string PasswordHash { get; set; }
+        public string[] AccountIds { get; set; }
 
-        public string UserName { get { return userName; } set { userName = value; } }
-
-        private string email;
-
-        public string Email { get { return email; } set { email = value; } }
-
-        private string passwordHash;
-
-        public string PasswordHash { get { return passwordHash; } set { passwordHash = value; } }
-
-        private string[] accountIds;
-
-        private string[] AccountIds { get { return accountIds; } set { accountIds = value; } }
+        public ICollection<BankAccount> Accounts { get; set; }
 
         public bool isBankConnected(BankName bank)
         {
