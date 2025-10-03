@@ -6,7 +6,7 @@ namespace FintechStatsPlatform.Models
     {
         protected string id;
 
-        protected string Id {get { return id;} set { id = value; } }
+        public string Id {get { return id;} set { id = value; } }
 
         protected IMapper mapper;
 

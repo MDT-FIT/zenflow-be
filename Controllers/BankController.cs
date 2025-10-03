@@ -1,4 +1,5 @@
-﻿using FintechStatsPlatform.Services;
+﻿using FintechStatsPlatform.Models;
+using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FintechStatsPlatform.Controllers
@@ -19,6 +20,13 @@ namespace FintechStatsPlatform.Controllers
         {
             var tokenJson =  _bankService.GetTinkAccessToken();
             return Ok(tokenJson); // повертаємо JSON як рядок
+        }
+
+        [HttpGet("bank-configs/{userId}")]
+        public IActionResult getConfigs([FromRoute] string userId) 
+        {
+           
+            return Ok(_bankService.listBankConfigs(userId));
         }
     }
 }

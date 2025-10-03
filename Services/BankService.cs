@@ -7,11 +7,13 @@ namespace FintechStatsPlatform.Services
 {
     public class BankService
     {
-
+        private string tinkLink = "https://link.tink.com/1.0/account-check/?client_id=d33f61e7a07f42baa2a18292a2d2ac61&redirect_uri=https%3A%2F%2Fconsole.tink.com%2Fcallback&market=PL&locale=en_US";
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
         private readonly IMemoryCache _cache;
+        private readonly BankConfig _tinkConfig;
+
 
 
         public BankService(string clientId, string clientSecret, IMemoryCache cache)
@@ -20,6 +22,7 @@ namespace FintechStatsPlatform.Services
             _clientSecret = clientSecret;
             _httpClient = new HttpClient();
             _cache = cache;
+            _tinkConfig = new BankConfig(tinkLink);
         }
 
 
@@ -28,8 +31,22 @@ namespace FintechStatsPlatform.Services
             return new List<Transaction>();
         }
 
-        public List<BankConfig> listBankConfigs(string userdId)
+        public List<BankConfig> listBankConfigs(string userId)
         {
+            
+            // Додати перевірку чи у юзера підключен банк
+            string id = "id"; // get from DB
+            if (id == userId)
+            {
+                //hardcode
+                var user = new User();
+                user.Id = userId;
+
+                //
+                List<BankConfig> bankConfigs = new List<BankConfig> {_tinkConfig};
+                List<BankConfig> filterdConfigs = bankConfigs.Where(config => user.isBankConnected(config.BankName)).ToList();
+                return filterdConfigs;
+            }
             return new List<BankConfig>();
         }
 
@@ -40,7 +57,7 @@ namespace FintechStatsPlatform.Services
 
         public  void connectMono() { }
 
-        public void connectOtherBank(string userdId, BankConfig config)
+        public void connectOtherBank(string userId)
         {
             
         }
@@ -59,7 +76,7 @@ namespace FintechStatsPlatform.Services
             new KeyValuePair<string, string>("client_secret", _clientSecret),
             new KeyValuePair<string, string>("grant_type", "client_credentials"),
             new KeyValuePair<string, string>("scope", "authorization:grant,user:create"),
-        });
+            });
 
             var response = _httpClient.PostAsync("https://api.tink.com/api/v1/oauth/token", content).Result;
             response.EnsureSuccessStatusCode();
@@ -74,8 +91,5 @@ namespace FintechStatsPlatform.Services
 
             return token;
         }
-
-
-
     }
 }
