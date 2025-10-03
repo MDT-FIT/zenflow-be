@@ -14,8 +14,8 @@ namespace FintechStatsPlatform.Controllers
             _bankService = bankService;
         }
 
-        [HttpGet("test-tink")]
-        public IActionResult TestTink()
+        [HttpGet("get-tink-token")]
+        public IActionResult getTinkAccesssToken()
         {
             var tokenJson =  _bankService.GetTinkAccessToken();
             return Ok(tokenJson); // повертаємо JSON як рядок

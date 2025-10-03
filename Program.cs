@@ -1,5 +1,6 @@
 
 using DotNetEnv;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FintechStatsPlatform
 {
@@ -12,6 +13,7 @@ namespace FintechStatsPlatform
 
             var clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID");
             var clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET");
+            var secret_key = Environment.GetEnvironmentVariable("SECRET_KEY");
 
             // Add services to the container.
 
@@ -19,11 +21,22 @@ namespace FintechStatsPlatform
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddMemoryCache();
             // Додаємо BankService у DI контейнер
             builder.Services.AddSingleton<Services.BankService>(provider =>
             {
-                return new Services.BankService(clientId, clientSecret);
+                var cache = provider.GetRequiredService<IMemoryCache>();
+                return new Services.BankService(clientId, clientSecret, cache);
             });
+
+            // Реєструємо AuthService у DI
+            builder.Services.AddSingleton<Services.AuthService>(provider =>
+            {
+                return new Services.AuthService(clientId, clientSecret, secret_key);
+            });
+
+
+
 
 
             var app = builder.Build();

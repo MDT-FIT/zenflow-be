@@ -6,7 +6,7 @@ namespace FintechStatsPlatform.Models
     {
         private string userName;
 
-        public string UserName { get { return userName; } set { userName = value; } }
+        public string Username { get { return userName; } set { userName = value; } }
 
         private string email;
 
