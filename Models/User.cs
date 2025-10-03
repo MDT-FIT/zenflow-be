@@ -1,4 +1,4 @@
-﻿using FintechStatsPlatform.Enumirators;
+using FintechStatsPlatform.Enumirators;
 
 namespace FintechStatsPlatform.Models
 {
@@ -7,26 +7,18 @@ namespace FintechStatsPlatform.Models
         static public Dictionary<BankName,string> bankNamesKeyValuePairs = new Dictionary<BankName, string> { 
             { BankName.OTHER, "tink-" },{ BankName.MONO,"mono-"} 
         };
+        
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string PasswordHash { get; set; }
+        public string[] AccountIds { get; set; }
+
+        public ICollection<BankAccount> Accounts { get; set; }
+        
         public User()
         {
-            accountIds = new List<string>();
+            AccountIds = new List<string>();
         }
-        
-        private string userName;
-
-        public string Username { get { return userName; } set { userName = value; } }
-
-        private string email;
-
-        public string Email { get { return email; } set { email = value; } }
-
-        private string passwordHash;
-
-        public string PasswordHash { get { return passwordHash; } set { passwordHash = value; } }
-
-        private List<string> accountIds;
-
-        private List<string> AccountIds { get { return accountIds; } set { accountIds = value; } }
 
         public bool isBankConnected(BankName queryBank)
         {

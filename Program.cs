@@ -1,3 +1,5 @@
+using FintechStatsPlatform.Models;
+using Microsoft.EntityFrameworkCore;
 
 using DotNetEnv;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,6 +13,8 @@ namespace FintechStatsPlatform
             Env.Load();
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddDbContextPool<FintechContext>(opt =>
+                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
             var clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID");
             var clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET");
             var secret_key = Environment.GetEnvironmentVariable("SECRET_KEY");
@@ -55,7 +59,21 @@ namespace FintechStatsPlatform
 
             app.MapControllers();
 
-            app.Run();
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<FintechContext>();
+
+                if (db.Database.CanConnect())
+                {
+                    Console.WriteLine("Database connection successful"); ;
+                }
+                else
+                {
+                    Console.WriteLine("Failed to connect to the database");
+                }
+            }
+
+                app.Run();
         }
     }
 }
