@@ -4,7 +4,11 @@ namespace FintechStatsPlatform.Models
 {
     public class Account : AbstractEntity
     {
-
+        public Account(string userId, string bankUserId) 
+        { 
+            this.userId = userId;
+            this.bankUserId = bankUserId;
+        }
         private string bankId;
 
         public string BankId { get {  return bankId; } set { bankId = value; } }

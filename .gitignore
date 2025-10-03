@@ -542,3 +542,6 @@ FodyWeavers.xsd
 *.xhtml
 
 # End of https://www.toptal.com/developers/gitignore/api/csharp,aspnetcore,web
+
+# Secrets
+.env
