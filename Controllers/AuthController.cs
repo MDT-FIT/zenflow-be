@@ -1,8 +1,9 @@
-﻿using FintechStatsPlatform.Models;
+﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
-using FintechStatsPlatform.DTO;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,93 +17,52 @@ namespace FintechStatsPlatform.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+        private readonly UsersService _usersService;
         private PasswordHasher<string> passwordHasher;
-        public AuthController(AuthService authService) 
+        public AuthController(AuthService authService, UsersService usersService) 
         { 
-          _authService = authService;
+            _authService = authService;
+            _usersService = usersService;
             passwordHasher = new PasswordHasher<string>();
         }
 
         [HttpPost("sign-up")]
-        public IActionResult SignUp([FromBody] SignUpRequest request)
+        public async Task<IActionResult> SignUp([FromBody] SignUpRequest request)
         {
-            // Перевірка простих умов
             if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
                 return BadRequest("Email і пароль обов'язкові");
 
-            // Створимо "фейкового" користувача
-            var user = new User
+            try
             {
-                Email = request.Email,
-                Username = request.Username,
-            };
+                var user = await _authService.RegisterUserAsync(request.Username, request.Email, request.Password);
+                var accessToken = _authService.GenerateJwtToken(user); // окремий метод у сервісі для JWT
 
-            if (user == null)
-                return Unauthorized("Невірний email або пароль");
-
-            user.PasswordHash = passwordHasher.HashPassword(null, request.Password);
-
-            // Створюємо JWT токен так само, як у LogIn
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_authService.SecretKey);
-            var tokenDescriptor = new SecurityTokenDescriptor
+                return Ok(new { user, access_token = accessToken });
+            }
+            catch (Exception ex)
             {
-                Subject = new ClaimsIdentity(
-                new[]
-                {
-                    new Claim(ClaimTypes.Email, user.Email)
-                }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature
-                )
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var accessToken = tokenHandler.WriteToken(token);
-
-            return Ok(new { user, access_token = accessToken });
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("log-in")]
-        public IActionResult LogIn([FromBody] LogInRequest request) 
+        public async Task<IActionResult> LogIn([FromBody] LogInRequest request)
         {
-            string hashedPassword = passwordHasher.HashPassword(null, "123456");
-            var user = (request.Email == "test@test.com" && PasswordVerificationResult.Success == passwordHasher.VerifyHashedPassword(null,hashedPassword,request.Password))
-            ? new User{Email = request.Email }
-            : null;
+            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
+                return BadRequest("Введіть логін і пароль");
 
+            var accessToken = await _authService.LogInAsync(request.Email, request.Password);
 
-            if (user == null)
+            if (string.IsNullOrEmpty(accessToken))
                 return Unauthorized("Невірний email або пароль");
-
-            // Створюємо JWT токен
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_authService.SecretKey); // з .env або appsettings.json
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(
-                new[]
-                {
-                    new Claim(ClaimTypes.Email, user.Email)
-                }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature
-                )
-            };
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var accessToken = tokenHandler.WriteToken(token);
 
             return Ok(new { access_token = accessToken });
         }
 
         [HttpPost("log-out")]
-        public IActionResult LogOut()
+        public IActionResult LogOut([FromBody] string accessToken)
         {
-            // У реальному застосунку тут би видаляли токен з бази або сесії
+            _authService.LogOut(accessToken);
             return Ok(new { message = "Вихід успішний" });
         }
 
