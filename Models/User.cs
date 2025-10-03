@@ -11,7 +11,7 @@ namespace FintechStatsPlatform.Models
         public string Username { get; set; }
         public string Email { get; set; }
         public string PasswordHash { get; set; }
-        public string[] AccountIds { get; set; }
+        public List<string> AccountIds { get; set; }
 
         public ICollection<BankAccount> Accounts { get; set; }
         
