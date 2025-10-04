@@ -34,7 +34,7 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasColumnName("created_at")
                 .HasColumnType("timestamp")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
-            
+
             builder
                 .Ignore(u => u.Username);
 

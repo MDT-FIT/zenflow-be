@@ -1,11 +1,11 @@
 using DotNetEnv;
+using DotNetEnv;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using DotNetEnv;
 
 namespace FintechStatsPlatform
 {
@@ -35,11 +35,11 @@ namespace FintechStatsPlatform
             // Memory cache
             builder.Services.AddMemoryCache();
             // Додаємо BankService у DI контейнер
-            builder.Services.AddScoped<BanksService>(provider =>
+            builder.Services.AddScoped<BankService>(provider =>
             {
                 var cache = provider.GetRequiredService<IMemoryCache>();
                 var context = provider.GetRequiredService<FintechContext>();
-                return new BanksService(clientId, clientSecret, cache, context);
+                return new BankService(cache, context);
             });
             builder.Services.AddScoped<UsersService>(provider =>
             {

@@ -4,8 +4,8 @@ namespace FintechStatsPlatform.Models
 {
     public class Account : AbstractEntity
     {
-        public Account(string userId, string bankUserId = "", string bankId = "", long balance = 0, List<Card>? cards = null) 
-        { 
+        public Account(string userId, string bankUserId = "", string bankId = "", long balance = 0, List<Card>? cards = null)
+        {
             UserId = userId;
             BankUserId = bankUserId;
             BankId = bankId;
@@ -21,7 +21,7 @@ namespace FintechStatsPlatform.Models
 
         public List<Card> Cards { get; set; }
 
-        public long Balance { get; set;  }
+        public long Balance { get; set; }
 
         public Card getCardInfo(string cardNumber, BankName bank)
         {

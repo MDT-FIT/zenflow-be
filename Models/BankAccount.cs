@@ -8,6 +8,6 @@
         public long Balance { get; set; }
 
         public User User { get; set; }
-        public Bank Bank { get; set; }
+        public BankConfig Bank { get; set; }
     }
 }

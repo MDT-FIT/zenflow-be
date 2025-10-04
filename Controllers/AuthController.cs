@@ -3,6 +3,7 @@ using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 
 
@@ -19,8 +20,8 @@ namespace FintechStatsPlatform.Controllers
 
         private readonly UsersService _usersService;
         private PasswordHasher<string> passwordHasher;
-        public AuthController(AuthService authService, ILogger<AuthController> logger, UsersService usersService, FintechContext context) 
-        { 
+        public AuthController(AuthService authService, ILogger<AuthController> logger, UsersService usersService, FintechContext context)
+        {
             _authService = authService;
             _logger = logger;
             _usersService = usersService;
@@ -66,6 +67,19 @@ namespace FintechStatsPlatform.Controllers
 
                 _logger.LogInformation("User successfully registered: {Email}", request.Email);
 
+
+                HttpContext.Response.Cookies.Append(
+"jwt_token",
+tokenResponse.AccessToken,
+new CookieOptions
+{
+    HttpOnly = true,
+    Secure = true,
+    SameSite = SameSiteMode.Strict,
+    Expires = DateTimeOffset.UtcNow.AddHours(1)
+});
+
+
                 return Ok(new
                 {
                     user,
@@ -103,20 +117,33 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Login attempt for email: {Email}", request.Email);
 
-                // Автентифікуємо через Auth0
                 var tokenResponse = await _authService.LogInAsync(request.Email, request.Password);
 
-                // Отримуємо інформацію про користувача
                 var userInfo = await _authService.GetUserInfoAsync(tokenResponse.AccessToken);
 
-                // TODO: Перевірити чи існує користувач в БД, якщо ні - створити
-                // var user = await _userRepository.GetByEmailAsync(userInfo.Email);
-                // if (user == null) {
-                //     user = _authService.ConvertToUser(userInfo);
-                //     await _userRepository.CreateAsync(user);
-                // }
+                var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub);
+
+                if (user == null)
+                {
+                    user = _authService.ConvertToUser(userInfo);
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                }
 
                 _logger.LogInformation("User successfully logged in: {Email}", request.Email);
+
+
+                HttpContext.Response.Cookies.Append(
+"jwt_token",
+tokenResponse.AccessToken,
+new CookieOptions
+{
+    HttpOnly = true,
+    Secure = true,
+    SameSite = SameSiteMode.Strict,
+    Expires = DateTimeOffset.UtcNow.AddHours(1)
+});
+
 
                 return Ok(new
                 {
@@ -181,8 +208,9 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost("log-out")]
         public IActionResult LogOut([FromBody] string accessToken)
         {
-            // Для token-based auth logout виконується на клієнті
-            // Токен видаляється з localStorage/sessionStorage
+            HttpContext.Response.Cookies.Delete(
+"jwt_token");
+
             _authService.LogOut();
 
             return Ok(new { message = "Вихід успішний" });

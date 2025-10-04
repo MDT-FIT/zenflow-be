@@ -8,27 +8,26 @@ namespace FintechStatsPlatform.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BanksController(BanksService banksService) : ControllerBase
+    public class BankController(BankService banksService) : ControllerBase
     {
-        private readonly BanksService _banksService = banksService;
+        private readonly BankService _banksService = banksService;
 
         [HttpGet("bank-configs/{userId}")]
         public IActionResult getConfigs([FromRoute] string userId)
         {
-             List<BankConfig> allUserConfigs = _banksService.listBankConfigs(userId);
+            List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
 
-            // Перевірка, чи список порожній
-            return !allUserConfigs.Any() ? NotFound(new { message = "У користувача немає підключених банків." }) 
-                : Ok(allUserConfigs);
+            return Ok(allUserConfigs);
         }
 
-        [HttpPost("connect-other-bank/{accountVerificationId}")]
+        [HttpPost("connect/other-bank/{accountVerificationId}")]
         public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string accountVerificationId)
         {
-            userId = User.FindFirst("sub")?.Value;
+            userId = User.FindFirst("sub")?.Value ?? "";
+
             try
             {
-                await _banksService.connectOtherBankAsync(userId, accountVerificationId);
+                await _banksService.ConnectOtherBankAsync(userId, accountVerificationId);
                 return Ok(new { message = "Акаунти користувача успішно підключені" });
             }
             catch (HttpRequestException ex)
@@ -45,7 +44,7 @@ namespace FintechStatsPlatform.Controllers
 
         // GET: api/Banks
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Bank>>> GetBanks()
+        public async Task<ActionResult<IEnumerable<BankConfig>>> GetBanks()
         {
             var banks = await _banksService.GetBanksAsync();
             return Ok(banks);
@@ -53,7 +52,7 @@ namespace FintechStatsPlatform.Controllers
 
         // GET: api/Banks/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Bank>> GetBank(string id)
+        public async Task<ActionResult<BankConfig>> GetBank(string id)
         {
             var bank = await _banksService.GetBankByIdAsync(id);
             if (bank == null) return NotFound();
@@ -63,7 +62,7 @@ namespace FintechStatsPlatform.Controllers
         // PUT: api/Banks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBank(string id, Bank bank)
+        public async Task<IActionResult> PutBank(string id, BankConfig bank)
         {
             var success = await _banksService.UpdateBankAsync(id, bank);
             if (!success) return NotFound();
@@ -73,7 +72,7 @@ namespace FintechStatsPlatform.Controllers
         // POST: api/Banks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Bank>> PostBank(Bank bank)
+        public async Task<ActionResult<BankConfig>> PostBank(BankConfig bank)
         {
             var createdBank = await _banksService.AddBankAsync(bank);
             return CreatedAtAction(nameof(GetBank), new { id = createdBank.Id }, createdBank);
@@ -88,6 +87,6 @@ namespace FintechStatsPlatform.Controllers
             return NoContent();
         }
 
-        
+
     }
 }

@@ -13,8 +13,8 @@ namespace FintechStatsPlatform.Services
         }
 
 
-        public async Task<User> GetUserByEmailAsync(string email) 
-        { 
+        public async Task<User> GetUserByEmailAsync(string email)
+        {
             return await _context.Users.FirstOrDefaultAsync(u => email.Equals(u.Email));
         }
         public async Task<List<User>> GetUsersAsync()

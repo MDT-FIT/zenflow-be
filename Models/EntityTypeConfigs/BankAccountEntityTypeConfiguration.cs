@@ -23,12 +23,6 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder
-                .HasOne(a => a.Bank)
-                .WithMany(b => b.BankAccounts)
-                .HasForeignKey(a => a.BankId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder
                 .Property(a => a.UserId)
                 .HasColumnName("user_id");
 
@@ -64,6 +58,8 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
 
             builder
                 .Ignore(b => b.Mapper);
+            builder
+                .Ignore(b => b.Bank);
         }
     }
 }
