@@ -2,19 +2,13 @@
 
 namespace FintechStatsPlatform.Models
 {
-    public enum Country
+    public class Bank(string name = "", string logo = "", string apiLink = ""
+        , string currency = "") : AbstractEntity
     {
-        Ukraine,
-        Poland,
-    }
-
-    public class Bank : AbstractEntity
-    {
-        public string Name { get; set; }
-        public string Logo { get; set; }
-        public Country Country { get; set; }
-        public string ApiLink { get; set; }
-        
-        public ICollection<BankAccount> BankAccounts { get; set; }
+        public string Name { get; set; } = name;
+        public string Logo { get; set; } = logo;
+        public string ApiLink { get; set; } = apiLink;
+        public string Currency { get; set; } = currency;
+        public List<BankAccount> BankAccounts { get; set; } = [];
     }
 }
