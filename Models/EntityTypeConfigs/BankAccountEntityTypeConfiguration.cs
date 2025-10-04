@@ -37,9 +37,15 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasColumnName("bank_id");
 
             builder
+                .Property(a => a.CurrencyScale)
+                .HasColumnName("currency_scale")
+                .HasColumnType("smallint")
+                .HasDefaultValue(2);
+
+            builder
                 .Property(a => a.Balance)
                 .HasColumnName("balance")
-                .HasColumnType("numeric(10, 2)")
+                .HasColumnType("bigint")
                 .HasDefaultValue(0);
 
             builder
