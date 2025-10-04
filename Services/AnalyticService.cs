@@ -6,18 +6,18 @@ namespace FintechStatsPlatform.Services
 {
     public class AnalyticService
     {
-        public Stats getExpenses(StatsFilter filter) 
+        public Stats getExpenses(StatsFilter filter)
         {
             return new Stats("test");
         }
 
-        public Stats getIncome(StatsFilter filter) 
+        public Stats getIncome(StatsFilter filter)
         {
             return new Stats("test");
         }
 
-        public  Card getMostUsedCard(StatsFilter filter)
-        { 
+        public Card getMostUsedCard(StatsFilter filter)
+        {
             return new Card();
         }
     }

@@ -12,11 +12,11 @@ namespace FintechStatsPlatform.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UsersController : ControllerBase
+    public class UserController : ControllerBase
     {
-        private readonly UsersService _userService;
+        private readonly UserService _userService;
 
-        public UsersController(UsersService userService)
+        public UserController(UserService userService)
         {
             _userService = userService;
         }

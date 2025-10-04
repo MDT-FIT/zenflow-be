@@ -106,10 +106,7 @@ namespace FintechStatsPlatform.Services
                 throw new Exception($"Auth0 signup failed: {responseContent}");
             }
 
-            // Auth0 повертає створеного користувача
             var signupResponse = JsonSerializer.Deserialize<Auth0UserInfo>(responseContent);
-
-            // Після реєстрації автоматично логінимо для отримання токенів
             await LogInAsync(email, password);
 
             return signupResponse ?? throw new Exception("Failed to deserialize signup response");
@@ -151,8 +148,10 @@ namespace FintechStatsPlatform.Services
                 throw new Exception($"Auth0 authentication failed: {responseContent}");
             }
 
-            return JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
+            var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
                 ?? throw new Exception("Failed to deserialize Auth0 response");
+
+            return tokenResponse;
         }
 
         /// <summary>
