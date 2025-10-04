@@ -18,18 +18,6 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasColumnType("varchar(100)");
 
             builder
-                .Property(u => u.Username)
-                .HasColumnName("username")
-                .HasMaxLength(50)
-                .IsRequired();
-
-            builder
-                .Property(u => u.Email)
-                .HasColumnName("email")
-                .HasMaxLength(50)
-                .IsRequired();
-
-            builder
                 .Property(u => u.AccountIds)
                 .HasColumnName("account_id")
                 .HasColumnType("varchar(100)[]")
@@ -46,12 +34,15 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasColumnName("created_at")
                 .HasColumnType("timestamp")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            builder
+                .Ignore(u => u.Username);
 
             builder
-                .Property(u => u.PasswordHash)
-                .HasColumnName("password")
-                .HasColumnType("varchar(200)")
-                .IsRequired();
+                .Ignore(u => u.Email);
+
+            builder
+                .Ignore(u => u.PasswordHash);
 
             builder
                 .Ignore(b => b.Mapper);
