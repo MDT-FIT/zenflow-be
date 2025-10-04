@@ -1,3 +1,4 @@
+using DotNetEnv;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.EntityFrameworkCore;
@@ -33,12 +34,24 @@ namespace FintechStatsPlatform
 
             // Memory cache
             builder.Services.AddMemoryCache();
-
-            // BankService (зберігаємо як є)
-            builder.Services.AddSingleton<BankService>(provider =>
+            // Додаємо BankService у DI контейнер
+            builder.Services.AddScoped<BanksService>(provider =>
             {
                 var cache = provider.GetRequiredService<IMemoryCache>();
-                return new BankService(clientId, clientSecret, cache);
+                var context = provider.GetRequiredService<FintechContext>();
+                return new BanksService(clientId, clientSecret, cache, context);
+            });
+            builder.Services.AddScoped<UsersService>(provider =>
+            {
+                var context = provider.GetRequiredService<FintechContext>();
+                return new UsersService(context);
+            });
+
+            // Реєструємо AuthService у DI
+            builder.Services.AddScoped<Services.AuthService>(provider =>
+            {
+                var context = provider.GetRequiredService<FintechContext>();
+                return new Services.AuthService(clientId, clientSecret, secret_key, context);
             });
 
             // AuthService з HttpClient для Auth0 (Scoped lifetime для HttpClient)

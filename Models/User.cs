@@ -4,7 +4,7 @@ namespace FintechStatsPlatform.Models
 {
     public class User : AbstractEntity
     {
-        static public Dictionary<BankName,string> bankNamesKeyValuePairs = new Dictionary<BankName, string> { 
+        static public Dictionary<BankName,string> BankNamesKeyValuePairs = new Dictionary<BankName, string> { 
             { BankName.OTHER, "tink-" },{ BankName.MONO,"mono-"} 
         };
         
@@ -22,7 +22,7 @@ namespace FintechStatsPlatform.Models
 
         public bool isBankConnected(BankName queryBank)
         {
-            if (AccountIds.Any(bank => bank.StartsWith(bankNamesKeyValuePairs[queryBank])))
+            if (AccountIds.Any(bank => bank.StartsWith(BankNamesKeyValuePairs[queryBank])))
                 return true;
             return false;
         }

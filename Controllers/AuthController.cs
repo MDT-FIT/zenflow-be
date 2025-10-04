@@ -1,10 +1,19 @@
-﻿using FintechStatsPlatform.Models;
+﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using FintechStatsPlatform.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
 
 namespace FintechStatsPlatform.Controllers
 {
@@ -19,6 +28,13 @@ namespace FintechStatsPlatform.Controllers
         {
             _authService = authService;
             _logger = logger;
+        private readonly UsersService _usersService;
+        private PasswordHasher<string> passwordHasher;
+        public AuthController(AuthService authService, UsersService usersService) 
+        { 
+            _authService = authService;
+            _usersService = usersService;
+            passwordHasher = new PasswordHasher<string>();
         }
 
         /// <summary>
@@ -178,7 +194,7 @@ namespace FintechStatsPlatform.Controllers
         /// POST /api/zenflow/auth/log-out
         /// </summary>
         [HttpPost("log-out")]
-        public IActionResult LogOut()
+        public IActionResult LogOut([FromBody] string accessToken)
         {
             // Для token-based auth logout виконується на клієнті
             // Токен видаляється з localStorage/sessionStorage
