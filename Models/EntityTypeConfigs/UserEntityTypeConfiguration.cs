@@ -19,7 +19,7 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
 
             builder
                 .Property(u => u.AccountIds)
-                .HasColumnName("account_ids")
+                .HasColumnName("account_id")
                 .HasColumnType("varchar(100)[]")
                 .HasDefaultValueSql("'{}'::varchar[]");
 
