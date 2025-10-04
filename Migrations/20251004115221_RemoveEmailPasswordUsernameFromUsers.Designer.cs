@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FintechStatsPlatform.Migrations
 {
     [DbContext(typeof(FintechContext))]
-    partial class FintechContextModelSnapshot : ModelSnapshot
+    [Migration("20251004115221_RemoveEmailPasswordUsernameFromUsers")]
+    partial class RemoveEmailPasswordUsernameFromUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,10 +38,10 @@ namespace FintechStatsPlatform.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("api_link");
 
-                    b.Property<string>("Currency")
+                    b.Property<string>("Country")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("currency");
+                        .HasColumnName("country");
 
                     b.Property<string>("Logo")
                         .IsRequired()

@@ -29,9 +29,9 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .IsRequired();
 
             builder
-                .Property(b => b.Country)
-                .HasColumnName("country")
-                .HasConversion<string>();
+                .Property(b => b.Currency)
+                .HasColumnName("currency")
+                .IsRequired();
 
             builder
                 .Property(b => b.ApiLink)
