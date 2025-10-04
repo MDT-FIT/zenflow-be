@@ -1,16 +1,19 @@
-﻿using FintechStatsPlatform.Models;
+﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 
 namespace FintechStatsPlatform.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BanksController(BanksService banksService) : ControllerBase
+    public class BanksController(BanksService banksService, AuthService authService, UsersService usersService) : ControllerBase
     {
         private readonly BanksService _banksService = banksService;
+        private readonly AuthService _authService = authService;
+        private readonly UsersService _usersService = usersService;
 
         [HttpGet("bank-configs/{userId}")]
         public IActionResult getConfigs([FromRoute] string userId)
@@ -22,13 +25,13 @@ namespace FintechStatsPlatform.Controllers
                 : Ok(allUserConfigs);
         }
 
-        [HttpPost("connect-other-bank/{accountVerificationId}")]
-        public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string accountVerificationId)
+        [HttpPost("connect-other-bank/{code}")]
+        public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string code)
         {
             userId = User.FindFirst("sub")?.Value;
             try
             {
-                await _banksService.connectOtherBankAsync(userId, accountVerificationId);
+                await _banksService.connectOtherBankAsync(userId, code);
                 return Ok(new { message = "Акаунти користувача успішно підключені" });
             }
             catch (HttpRequestException ex)
@@ -41,6 +44,43 @@ namespace FintechStatsPlatform.Controllers
                 return StatusCode(500, new { error = "Внутрішня помилка сервера", details = ex.Message });
             }
         }
+        [HttpGet("balance")]
+        public async Task<IActionResult> GetBalance([FromQuery] string accountId)
+        {
+            if (string.IsNullOrWhiteSpace(accountId))
+                return BadRequest(new { message = "AccountId is required." });
+
+            string userAccessToken;
+
+            // 1️⃣ Отримуємо access token через refresh token
+            try
+            {
+                userAccessToken = _banksService.GetTinkAccessToken("5eede43c556940969ca2f59b241b1b26");
+
+                if (string.IsNullOrEmpty(userAccessToken))
+                    return Unauthorized(new { message = "Failed to obtain user access token." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Failed to get access token: {ex.Message}" });
+            }
+
+            // 2️⃣ Викликаємо BanksService для отримання балансу
+            try
+            {
+                var balance = await _banksService.GetBalanceAsync(accountId, userAccessToken);
+                return Ok(balance);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to get balance: {ex.Message}" });
+            }
+        }
+
 
 
         // GET: api/Banks

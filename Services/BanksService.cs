@@ -54,21 +54,39 @@ namespace FintechStatsPlatform.Services
             }
         }
 
-        public Balance getBalance(BalanceFilter filter)
-        { 
-            return new Balance();
+        public async Task<BalanceResponse> GetBalanceAsync(string accountId, string userAccessToken)
+        {
+                var request = new HttpRequestMessage(
+                    HttpMethod.Get,
+                    $"https://api.tink.com/api/v1/accounts/{accountId}/balances"
+                );
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userAccessToken);
+
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Tink API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<BalanceResponse>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
         }
 
         public  void connectMono() { }
 
-        public async Task connectOtherBankAsync(string userId, string accountVerificationId)
+        public async Task connectOtherBankAsync(string userId, string code)
         {
-            string token = GetTinkAccessToken("account-verification-reports:read");
+            string token = GetTinkAccessToken(code);
 
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await client.GetAsync($"https://api.tink.com/api/v1/account-verification-reports/{userId}");
+            var response = await client.GetAsync($"https://api.tink.com/api/v1/accounts/list");
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
@@ -96,12 +114,14 @@ namespace FintechStatsPlatform.Services
             await _context.SaveChangesAsync();
         }
 
-        public string GetTinkAccessToken(string scope)
+        public string GetTinkAccessToken(string code)
         {
+            string scope = "accounts:read,balances:read,transactions:read";
 
             // якщо немає у кеші → робимо запит
             var content = new FormUrlEncodedContent(new[]
             {
+                new KeyValuePair<string, string> ("code", code),
                 new KeyValuePair<string, string>("client_id", _clientId),
                 new KeyValuePair<string, string>("client_secret", _clientSecret),
                 new KeyValuePair<string, string>("grant_type", "client_credentials"),
