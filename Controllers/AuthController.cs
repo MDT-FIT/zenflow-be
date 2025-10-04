@@ -1,18 +1,7 @@
 ﻿using FintechStatsPlatform.DTO;
-using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
-using FintechStatsPlatform.DTO;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 
 namespace FintechStatsPlatform.Controllers
@@ -24,15 +13,12 @@ namespace FintechStatsPlatform.Controllers
         private readonly AuthService _authService;
         private readonly ILogger<AuthController> _logger;
 
-        public AuthController(AuthService authService, ILogger<AuthController> logger)
-        {
-            _authService = authService;
-            _logger = logger;
         private readonly UsersService _usersService;
         private PasswordHasher<string> passwordHasher;
-        public AuthController(AuthService authService, UsersService usersService) 
+        public AuthController(AuthService authService, ILogger<AuthController> logger, UsersService usersService) 
         { 
             _authService = authService;
+            _logger = logger;
             _usersService = usersService;
             passwordHasher = new PasswordHasher<string>();
         }
