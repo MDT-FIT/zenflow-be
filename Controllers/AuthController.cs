@@ -18,9 +18,9 @@ namespace FintechStatsPlatform.Controllers
         private readonly ILogger<AuthController> _logger;
         private readonly FintechContext _context;
 
-        private readonly UsersService _usersService;
+        private readonly UserService _usersService;
         private PasswordHasher<string> passwordHasher;
-        public AuthController(AuthService authService, ILogger<AuthController> logger, UsersService usersService, FintechContext context)
+        public AuthController(AuthService authService, ILogger<AuthController> logger, UserService usersService, FintechContext context)
         {
             _authService = authService;
             _logger = logger;
@@ -208,8 +208,7 @@ new CookieOptions
         [HttpPost("log-out")]
         public IActionResult LogOut([FromBody] string accessToken)
         {
-            HttpContext.Response.Cookies.Delete(
-"jwt_token");
+            HttpContext.Response.Cookies.Delete("jwt_token");
 
             _authService.LogOut();
 

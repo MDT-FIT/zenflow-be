@@ -1,7 +1,7 @@
-﻿using FintechStatsPlatform.Filters;
+﻿using FintechStatsPlatform.Enumirators;
+using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -13,17 +13,16 @@ namespace FintechStatsPlatform.Services
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
-        private readonly IMemoryCache _cache;
         private readonly FintechContext _context;
 
-        public BankService(IMemoryCache cache, FintechContext context)
+        public BankService(HttpClient httpClient, FintechContext context)
         {
             var tinkLink = Environment.GetEnvironmentVariable("TINK_FLOW_LINK") ?? "";
 
             _clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID") ?? "";
             _clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET") ?? "";
             _httpClient = new HttpClient();
-            _cache = cache;
+            _httpClient = httpClient;
             _context = context;
         }
 
@@ -59,14 +58,12 @@ namespace FintechStatsPlatform.Services
             throw new NotImplementedException("Has been not implemented yet");
         }
 
-        public async Task ConnectOtherBankAsync(string userId, string accountVerificationId)
+        public async Task ConnectOtherBankAsync(string userId, string token)
         {
-            string token = GetTinkAccessToken("account-verification-reports:read");
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
 
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await client.GetAsync($"{BaseApiLink}/api/v1/account-verification-reports/{userId}");
+            var response = await _httpClient.GetAsync($"{BaseApiLink}/data/v2/accounts");
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
@@ -76,16 +73,19 @@ namespace FintechStatsPlatform.Services
 
             List<BankAccount> userAccountsList = new List<BankAccount>();
 
+            var bank = _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER);
+
+            // FIX ME: WTF the bankId violates the foreign key constraint ????
             foreach (var tinkAccount in accountsJson.EnumerateArray())
             {
                 string id = tinkAccount.GetProperty("id").GetString();
-                string fullBankId = User.BankNameMap[Enumirators.BankName.OTHER] + id;
+                string fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
 
                 userAccountsList.Add(new BankAccount
                 {
-                    Id = Guid.NewGuid().ToString(),
+                    Id = fullBankId,
                     UserId = userId,
-                    BankId = fullBankId,
+                    BankId = bank != null ? bank.Id : "",
                     Balance = 0
                 });
             }
@@ -94,17 +94,18 @@ namespace FintechStatsPlatform.Services
             await _context.SaveChangesAsync();
         }
 
-        public string GetTinkAccessToken(string scope)
+        public string GetTinkAccessToken(string code = "", string scope = "")
         {
 
-            // якщо немає у кеші → робимо запит
-            var content = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("client_id", _clientId),
-                new KeyValuePair<string, string>("client_secret", _clientSecret),
-                new KeyValuePair<string, string>("grant_type", "client_credentials"),
-                new KeyValuePair<string, string>("scope", scope),
-            });
+            var parameters = new Dictionary<string, string>()
+    {
+        { "grant_type", "authorization_code" },
+        { "code", code },
+        { "client_id", _clientId },
+        { "client_secret", _clientSecret }
+    };
+
+            var content = new FormUrlEncodedContent(parameters);
 
             var response = _httpClient.PostAsync($"{BaseApiLink}/api/v1/oauth/token", content).Result;
             response.EnsureSuccessStatusCode();

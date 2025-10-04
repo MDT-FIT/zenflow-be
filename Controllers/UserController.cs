@@ -14,9 +14,9 @@ namespace FintechStatsPlatform.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly UsersService _userService;
+        private readonly UserService _userService;
 
-        public UserController(UsersService userService)
+        public UserController(UserService userService)
         {
             _userService = userService;
         }

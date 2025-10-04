@@ -24,5 +24,9 @@ namespace FintechStatsPlatform.Enumirators
                 v => dictionary[v],
                 v => dictionary.FirstOrDefault(kvp => kvp.Value == v).Key
             );
+
+        static public Dictionary<BankName, string> BankNameToIdMap = new Dictionary<BankName, string> {
+            { BankName.OTHER, "tink-" },{ BankName.MONO,"mono-"}
+        };
     }
 }
