@@ -1,17 +1,7 @@
-﻿using System;
-using System.Net.Http;
 ﻿using FintechStatsPlatform.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using FintechStatsPlatform.Models;
 
 namespace FintechStatsPlatform.Services
 {
@@ -82,7 +72,7 @@ namespace FintechStatsPlatform.Services
         }
 
         /// <summary>
-        /// Реєстрація користувача через Auth0
+        /// Sign in with oAuth
         /// </summary>
         public async Task<Auth0UserInfo> SignUpAsync(string username, string email, string password)
         {

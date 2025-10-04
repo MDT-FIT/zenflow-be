@@ -50,8 +50,9 @@ namespace FintechStatsPlatform
             // Реєструємо AuthService у DI
             builder.Services.AddScoped<Services.AuthService>(provider =>
             {
-                var context = provider.GetRequiredService<FintechContext>();
-                return new Services.AuthService(clientId, clientSecret, secret_key, context);
+                var httpClient = provider.GetRequiredService<HttpClient>();
+                var configuration = provider.GetRequiredService<IConfiguration>();
+                return new Services.AuthService(httpClient, configuration);
             });
 
             // AuthService з HttpClient для Auth0 (Scoped lifetime для HttpClient)
