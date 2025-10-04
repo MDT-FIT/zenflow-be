@@ -545,3 +545,4 @@ FodyWeavers.xsd
 
 # Secrets
 .env
+appsettings.Development.json

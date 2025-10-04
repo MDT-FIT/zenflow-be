@@ -1,7 +1,7 @@
-using FintechStatsPlatform.Models;
-using Microsoft.EntityFrameworkCore;
-
 using DotNetEnv;
+using FintechStatsPlatform.Models;
+using FintechStatsPlatform.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace FintechStatsPlatform
@@ -27,16 +27,23 @@ namespace FintechStatsPlatform
             builder.Services.AddSwaggerGen();
             builder.Services.AddMemoryCache();
             // Додаємо BankService у DI контейнер
-            builder.Services.AddSingleton<Services.BankService>(provider =>
+            builder.Services.AddScoped<BanksService>(provider =>
             {
                 var cache = provider.GetRequiredService<IMemoryCache>();
-                return new Services.BankService(clientId, clientSecret, cache);
+                var context = provider.GetRequiredService<FintechContext>();
+                return new BanksService(clientId, clientSecret, cache, context);
+            });
+            builder.Services.AddScoped<UsersService>(provider =>
+            {
+                var context = provider.GetRequiredService<FintechContext>();
+                return new UsersService(context);
             });
 
             // Реєструємо AuthService у DI
-            builder.Services.AddSingleton<Services.AuthService>(provider =>
+            builder.Services.AddScoped<Services.AuthService>(provider =>
             {
-                return new Services.AuthService(clientId, clientSecret, secret_key);
+                var context = provider.GetRequiredService<FintechContext>();
+                return new Services.AuthService(clientId, clientSecret, secret_key, context);
             });
 
 
