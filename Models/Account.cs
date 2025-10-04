@@ -4,34 +4,28 @@ namespace FintechStatsPlatform.Models
 {
     public class Account : AbstractEntity
     {
-        public Account(string userId, string bankUserId) 
+        public Account(string userId, string bankUserId = "", string bankId = "", long balance = 0, List<Card>? cards = null) 
         { 
-            this.userId = userId;
-            this.bankUserId = bankUserId;
+            UserId = userId;
+            BankUserId = bankUserId;
+            BankId = bankId;
+            Balance = balance;
+            Cards = cards ?? new List<Card>();
         }
-        private string bankId;
 
-        public string BankId { get {  return bankId; } set { bankId = value; } }
+        public string BankId { get; set; }
 
-        private string bankUserId;
+        public string BankUserId { get; set; }
 
-        public string BankUserId { get { return bankUserId; } set {bankUserId = value; } }
+        public string UserId { get; set; }
 
-        private string userId;
+        public List<Card> Cards { get; set; }
 
-        public string UserId { get { return userId; } set { userId = value; } }
-
-        private List<Card> cards;
-
-        public List<Card> Cards { get { return cards; } set { cards = value; } }
-
-        private long balance;
-
-        public long Balance { get { return balance; } set { balance = value; } }
+        public long Balance { get; set;  }
 
         public Card getCardInfo(string cardNumber, BankName bank)
         {
-            return cards.Find(card => String.Concat(card.CardBin, card.LastFour).Equals(cardNumber));
+            return Cards.Find(card => String.Concat(card.CardBin, card.LastFour).Equals(cardNumber));
         }
     }
 }

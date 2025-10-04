@@ -2,26 +2,15 @@
 {
     public class Balance : AbstractEntity
     {
-        private string userId;
 
-        public string UserId { get { return userId; } set { userId = value; } }
+        public string UserId { get; set; }
 
-        private string[] accountIds;
+        private string AccountId { get; set; }
 
-        private string[] AccountIds { get { return accountIds; } set { accountIds = value; } }
+        public long Amount { get; set; }
 
-        private long amount;
+        public int Scale { get; set; }
 
-        public long Amount { get { return amount; } set { amount = value; } }
-
-        private int scale;
-
-        public int Scale { get { return scale; } set { scale = value; } }
-
-        private string currency;
-
-        public string Currency { get { return currency; } set { currency = value; } }
-
-
+        public string Currency { get; set; }
     }
 }

@@ -1,7 +1,10 @@
 ﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+
 
 
 namespace FintechStatsPlatform.Controllers
@@ -12,15 +15,17 @@ namespace FintechStatsPlatform.Controllers
     {
         private readonly AuthService _authService;
         private readonly ILogger<AuthController> _logger;
+        private readonly FintechContext _context;
 
         private readonly UsersService _usersService;
         private PasswordHasher<string> passwordHasher;
-        public AuthController(AuthService authService, ILogger<AuthController> logger, UsersService usersService) 
+        public AuthController(AuthService authService, ILogger<AuthController> logger, UsersService usersService, FintechContext context) 
         { 
             _authService = authService;
             _logger = logger;
             _usersService = usersService;
             passwordHasher = new PasswordHasher<string>();
+            _context = context;
         }
 
         /// <summary>
@@ -51,25 +56,20 @@ namespace FintechStatsPlatform.Controllers
                     request.Password
                 );
 
-                // Конвертуємо в нашу модель User
-                var user = _authService.ConvertToUser(auth0User);
-
-                // TODO: Зберегти користувача в БД
-                // await _userRepository.CreateAsync(user);
-
-                // Автоматично логінимо після реєстрації
                 var tokenResponse = await _authService.LogInAsync(request.Email, request.Password);
+                var handler = new JwtSecurityTokenHandler();
+                var idToken = handler.ReadJwtToken(tokenResponse.IdToken);
+
+                // Конвертуємо в нашу модель User
+                var user = _authService.ConvertToUser(auth0User, idToken.Payload.Sub);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
 
                 _logger.LogInformation("User successfully registered: {Email}", request.Email);
 
                 return Ok(new
                 {
-                    user = new
-                    {
-                        email = user.Email,
-                        username = user.Username,
-                        id = auth0User.Sub
-                    },
+                    user,
                     access_token = tokenResponse.AccessToken,
                     id_token = tokenResponse.IdToken,
                     refresh_token = tokenResponse.RefreshToken,
