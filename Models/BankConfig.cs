@@ -5,30 +5,19 @@ namespace FintechStatsPlatform.Models
     public class BankConfig : AbstractEntity
     {
 
-        public BankConfig(string apiLink) 
+        public BankConfig(BankName name = BankName.OTHER, string apiLink = "", string country = "", string cleintToken = "", string logo = "") 
         {
-            this.apiLink = apiLink; 
+            ApiLink = apiLink; 
+            Country = country;
+            ClientToken = cleintToken;
+            Logo = logo;
+            BankName = name;
         }
-
-        private BankName bankName;
-
-        public BankName BankName { get { return bankName; }  set { bankName = value; } }
-
-        private string country;
-
-        public string Country { get { return country; } set { country = value; } }
-
-        private string apiLink;
-
-        public string ApiLink { get { return apiLink; } set { apiLink = value; } }
-
-        private string clientToken;
-
-        public string ClientToken { get { return clientToken; } set { clientToken = value; } }
-
-        private string logo;
-
-        public string Logo { get { return logo; } set { logo = value; } }
+        public BankName BankName { get; set; }
+        public string Country { get; set; }
+        public string ApiLink { get; set; }
+        public string ClientToken { get; set; }
+        public string Logo { get; set; }
 
         private bool isEnabled;
 

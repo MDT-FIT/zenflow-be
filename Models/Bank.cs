@@ -9,6 +9,7 @@ namespace FintechStatsPlatform.Models
         public string Logo { get; set; } = logo;
         public string ApiLink { get; set; } = apiLink;
         public string Currency { get; set; } = currency;
-        public List<BankAccount> BankAccounts { get; set; } = [];
+
+        public ICollection<BankAccount> BankAccounts { get; set; }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using FintechStatsPlatform.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -239,14 +241,9 @@ namespace FintechStatsPlatform.Services
         /// <summary>
         /// Конвертувати Auth0UserInfo в модель User
         /// </summary>
-        public User ConvertToUser(Auth0UserInfo userInfo)
+        public User ConvertToUser(Auth0UserInfo userInfo, string forceId = "")
         {
-            return new User
-            {
-                Email = userInfo.Email,
-                Username = userInfo.Nickname ?? userInfo.Name ?? userInfo.Email.Split('@')[0],
-                // PasswordHash не зберігаємо, бо Auth0 управляє паролями
-            };
+            return new User(id: forceId ?? userInfo.Sub);
         }
 
         /// <summary>

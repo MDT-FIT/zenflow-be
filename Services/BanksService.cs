@@ -25,7 +25,7 @@ namespace FintechStatsPlatform.Services
             _clientSecret = clientSecret;
             _httpClient = new HttpClient();
             _cache = cache;
-            _tinkConfig = new BankConfig(tinkLink);
+            _tinkConfig = new BankConfig(apiLink: tinkLink);
             _context = context;
         }
 
@@ -81,7 +81,7 @@ namespace FintechStatsPlatform.Services
             foreach (var tinkAccount in accountsJson.EnumerateArray())
             {
                 string id = tinkAccount.GetProperty("id").GetString();
-                string fullBankId = User.BankNamesKeyValuePairs[Enumirators.BankName.OTHER] + id;
+                string fullBankId = User.BankNameMap[Enumirators.BankName.OTHER] + id;
 
                 userAccountsList.Add(new BankAccount
                 {

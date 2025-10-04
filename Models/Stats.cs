@@ -2,24 +2,22 @@
 {
     public class Stats : AbstractEntity
     {
-        private string userId;
+        public Stats(string userId, List<string>? accountIds = null, long amount = 0, int scale = 2, string currency = "")
+        {
+            UserId = userId;
+            AccountIds = accountIds ?? new List<string>();
+            Amount = amount;
+            Scale = scale;
+            Currency = currency;
+        }
+        public string UserId { get; set; }
 
-        public string UserId { get { return userId; } set { userId = value; } }
+        private List<string> AccountIds { get; set; }
 
-        private string[] accountIds;
+        public long Amount { get; set; }
 
-        private string[] AccountIds { get { return accountIds; } set { accountIds = value; } }
+        public int Scale { get; set; }
 
-        private long amount;
-
-        public long Amount { get { return amount; } set { amount = value; } }
-
-        private int scale;
-
-        public int Scale { get { return scale; } set { scale = value; } }
-
-        private string currency;
-
-        public string Currency { get { return currency; } set { currency = value; } }
+        public string Currency { get; set; }
     }
 }

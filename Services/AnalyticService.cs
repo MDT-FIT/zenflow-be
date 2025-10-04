@@ -8,12 +8,12 @@ namespace FintechStatsPlatform.Services
     {
         public Stats getExpenses(StatsFilter filter) 
         {
-            return new Stats();
+            return new Stats("test");
         }
 
         public Stats getIncome(StatsFilter filter) 
         {
-            return new Stats();
+            return new Stats("test");
         }
 
         public  Card getMostUsedCard(StatsFilter filter)
