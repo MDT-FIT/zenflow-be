@@ -4,16 +4,16 @@ namespace FintechStatsPlatform.Filters
 {
    public abstract class AbstractFilter
    {
-        protected long id;
-        protected long Id { get { return id; } set { id = value; } }
+        protected string id;
+        protected string Id { get { return id; } set { id = value; } }
 
         protected string[] accountIds;
 
         protected string[] AccountIds { get { return accountIds; } set { accountIds = value; } }
 
-        protected long userId;
+        protected string userId;
         
-        protected long UserId { get { return userId; } set { userId = value; } }
+        protected string UserId { get { return userId; } set { userId = value; } }
 
 
         protected IMapper mapper;

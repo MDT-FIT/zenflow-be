@@ -4,25 +4,27 @@ namespace FintechStatsPlatform.Models
 {
     public class User : AbstractEntity
     {
-        private string userName;
+        static public Dictionary<BankName,string> BankNamesKeyValuePairs = new Dictionary<BankName, string> { 
+            { BankName.OTHER, "tink-" },{ BankName.MONO,"mono-"} 
+        };
+        
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string PasswordHash { get; set; }
+        public List<string> AccountIds { get; set; }
 
-        public string UserName { get { return userName; } set { userName = value; } }
-
-        private string email;
-
-        public string Email { get { return email; } set { email = value; } }
-
-        private string passwordHash;
-
-        public string PasswordHash { get { return passwordHash; } set { passwordHash = value; } }
-
-        private string[] accountIds;
-
-        private string[] AccountIds { get { return accountIds; } set { accountIds = value; } }
-
-        public bool isBankConnected(BankName bank)
+        public ICollection<BankAccount> Accounts { get; set; }
+        
+        public User()
         {
-            return 1 == 0;
+            AccountIds = new List<string>();
+        }
+
+        public bool isBankConnected(BankName queryBank)
+        {
+            if (AccountIds.Any(bank => bank.StartsWith(BankNamesKeyValuePairs[queryBank])))
+                return true;
+            return false;
         }
     }
 }

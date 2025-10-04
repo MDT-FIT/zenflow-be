@@ -19,10 +19,5 @@ namespace FintechStatsPlatform.Models
         private bool result;
 
         public bool Result { get { return result; } set { result = value; } }
-
-        private void replenish() { }
-
-        private void withdraw() { }
-
     }
 }
