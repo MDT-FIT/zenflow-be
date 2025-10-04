@@ -42,9 +42,6 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .Ignore(u => u.Email);
 
             builder
-                .Ignore(u => u.PasswordHash);
-
-            builder
                 .Ignore(b => b.Mapper);
         }
     }

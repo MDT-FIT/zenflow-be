@@ -7,18 +7,19 @@ namespace FintechStatsPlatform.Models
         static public Dictionary<BankName,string> BankNameMap = new Dictionary<BankName, string> { 
             { BankName.OTHER, "tink-" },{ BankName.MONO,"mono-"} 
         };
-        
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public List<string> AccountIds { get; set; }
-        public ICollection<BankAccount> Accounts { get; set; }
-        public User(string id, string username = "", string email = "", List<string>? accountIds = null)
+        public User() { }
+        public User(string id = "", string username = "", string email = "", List<string>? accountIds = null)
         {
             Id = id;
             AccountIds = accountIds ?? new List<string>();
             Username = username;
             Email = email;
         }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public List<string> AccountIds { get; set; }
+        public ICollection<BankAccount> Accounts { get; set; }
+
 
         public bool isBankConnected(BankName queryBank)
         {

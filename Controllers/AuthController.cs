@@ -49,18 +49,17 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Sign up attempt for email: {Email}", request.Email);
 
-                // Реєструємо користувача в Auth0
                 var auth0User = await _authService.SignUpAsync(
                     request.Username,
                     request.Email,
                     request.Password
                 );
 
+                // Get id token from oAuth and save into our extended DB
                 var tokenResponse = await _authService.LogInAsync(request.Email, request.Password);
                 var handler = new JwtSecurityTokenHandler();
                 var idToken = handler.ReadJwtToken(tokenResponse.IdToken);
 
-                // Конвертуємо в нашу модель User
                 var user = _authService.ConvertToUser(auth0User, idToken.Payload.Sub);
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
