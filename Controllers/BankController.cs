@@ -18,8 +18,54 @@ namespace FintechStatsPlatform.Controllers
 
 			return Ok(allUserConfigs);
 		}
+        [HttpGet("balance")]
+        public async Task<IActionResult> GetBalance([FromQuery] string accountId)
+        {
+            if (string.IsNullOrWhiteSpace(accountId))
+                return BadRequest(new { message = "AccountId is required." });
 
-		[HttpPost("connect/other-bank/{code}")]
+            // string userAccessToken;
+            string token;
+
+            // 1️⃣ Отримуємо access token через refresh token
+            try
+            {
+                token = HttpContext.Request.Cookies["other_bank_token"];
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Unauthorized("Missing or expired token");
+                }
+
+               // userAccessToken = _banksService.GetTinkAccessToken("5eede43c556940969ca2f59b241b1b26");
+
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(new { message = "Failed to obtain user access token." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = $"Failed to get access token: {ex.Message}" });
+            }
+
+            // 2️⃣ Викликаємо BanksService для отримання балансу
+            try
+            {
+                var balance = await _banksService.GetBalanceAsync(accountId, token);
+                return Ok(balance);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to get balance: {ex.Message}" });
+            }
+        }
+
+
+
+        [HttpPost("connect/other-bank/{code}")]
 		public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string code)
 		{
 			try

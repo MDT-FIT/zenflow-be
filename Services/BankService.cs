@@ -48,10 +48,29 @@ namespace FintechStatsPlatform.Services
             }
         }
 
-        public Balance GetBalance(BalanceFilter filter)
+        public async Task<BalanceResponse> GetBalanceAsync(string accountId, string userAccessToken)
         {
-            throw new NotImplementedException("Has been not implemented yet");
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://api.tink.com/api/v1/accounts/{accountId}/balances"
+            );
+
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userAccessToken);
+
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Tink API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+            }
+
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<BalanceResponse>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
         }
+
 
         public void ConnectMono()
         {
@@ -98,12 +117,12 @@ namespace FintechStatsPlatform.Services
         {
 
             var parameters = new Dictionary<string, string>()
-    {
-        { "grant_type", "authorization_code" },
-        { "code", code },
-        { "client_id", _clientId },
-        { "client_secret", _clientSecret }
-    };
+            {
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "client_id", _clientId },
+                { "client_secret", _clientSecret }
+            };
 
             var content = new FormUrlEncodedContent(parameters);
 
