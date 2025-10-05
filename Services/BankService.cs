@@ -117,12 +117,12 @@ namespace FintechStatsPlatform.Services
         {
 
             var parameters = new Dictionary<string, string>()
-    {
-        { "grant_type", "authorization_code" },
-        { "code", code },
-        { "client_id", _clientId },
-        { "client_secret", _clientSecret }
-    };
+            {
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "client_id", _clientId },
+                { "client_secret", _clientSecret }
+            };
 
             var content = new FormUrlEncodedContent(parameters);
 

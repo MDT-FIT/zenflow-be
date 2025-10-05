@@ -24,14 +24,22 @@ namespace FintechStatsPlatform.Controllers
             if (string.IsNullOrWhiteSpace(accountId))
                 return BadRequest(new { message = "AccountId is required." });
 
-            string userAccessToken;
+            // string userAccessToken;
+            string token;
 
             // 1️⃣ Отримуємо access token через refresh token
             try
             {
-                userAccessToken = _banksService.GetTinkAccessToken("5eede43c556940969ca2f59b241b1b26");
+                token = HttpContext.Request.Cookies["other_bank_token"];
 
-                if (string.IsNullOrEmpty(userAccessToken))
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Unauthorized("Missing or expired token");
+                }
+
+               // userAccessToken = _banksService.GetTinkAccessToken("5eede43c556940969ca2f59b241b1b26");
+
+                if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { message = "Failed to obtain user access token." });
             }
             catch (Exception ex)
@@ -42,7 +50,7 @@ namespace FintechStatsPlatform.Controllers
             // 2️⃣ Викликаємо BanksService для отримання балансу
             try
             {
-                var balance = await _banksService.GetBalanceAsync(accountId, userAccessToken);
+                var balance = await _banksService.GetBalanceAsync(accountId, token);
                 return Ok(balance);
             }
             catch (HttpRequestException httpEx)
