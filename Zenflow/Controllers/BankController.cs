@@ -22,6 +22,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet("balance")]
         public async Task<IActionResult> GetBalance([FromQuery] string accountId)
         {
+            Console.WriteLine(_tinkJwtTokenKey);
             if (string.IsNullOrWhiteSpace(accountId))
                 return BadRequest(new { message = "AccountId is required." });
 

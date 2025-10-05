@@ -9,7 +9,7 @@ namespace FintechStatsPlatform.Services
 {
     public class BankService
     {
-        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_TINK_API_LINK") ?? "";
+        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_API_LINK") ?? "";
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
@@ -48,6 +48,7 @@ namespace FintechStatsPlatform.Services
 
         public async Task<BalanceResponse> GetBalanceAsync(string accountId, string userAccessToken)
         {
+            Console.WriteLine(BaseApiLink);
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
                 $"{BaseApiLink}/api/v1/accounts/{accountId}/balances"
