@@ -4,11 +4,7 @@ namespace FintechStatsPlatform.Models
 {
     public class BankConfig : AbstractEntity
     {
-        public BankConfig()
-        {
-
-        }
-
+        public BankConfig() { }
         public BankConfig(BankName name = BankName.OTHER, string apiLink = "", string currency = "", string logo = "", bool isEnabled = false)
         {
             ApiLink = apiLink;

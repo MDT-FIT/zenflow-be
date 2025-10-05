@@ -10,8 +10,9 @@ namespace FintechStatsPlatform.Controllers
 	public class BankController(BankService banksService) : ControllerBase
 	{
 		private readonly BankService _banksService = banksService;
+        private readonly string _tinkJwtTokenKey = Environment.GetEnvironmentVariable("TINK_JWT_TOKEN") ?? "other_bank_token";
 
-		[HttpGet("bank-configs/{userId}")]
+        [HttpGet("bank-configs/{userId}")]
 		public IActionResult ListBankConfigs([FromRoute] string userId)
 		{
 			List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
@@ -24,20 +25,16 @@ namespace FintechStatsPlatform.Controllers
             if (string.IsNullOrWhiteSpace(accountId))
                 return BadRequest(new { message = "AccountId is required." });
 
-            // string userAccessToken;
-            string token;
+            string token = HttpContext.Request.Cookies[_tinkJwtTokenKey] ?? "";
 
-            // 1️⃣ Отримуємо access token через refresh token
             try
             {
-                token = HttpContext.Request.Cookies["other_bank_token"];
+                
 
                 if (string.IsNullOrEmpty(token))
                 {
                     return Unauthorized("Missing or expired token");
                 }
-
-               // userAccessToken = _banksService.GetTinkAccessToken("5eede43c556940969ca2f59b241b1b26");
 
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { message = "Failed to obtain user access token." });
@@ -47,7 +44,6 @@ namespace FintechStatsPlatform.Controllers
                 return BadRequest(new { message = $"Failed to get access token: {ex.Message}" });
             }
 
-            // 2️⃣ Викликаємо BanksService для отримання балансу
             try
             {
                 var balance = await _banksService.GetBalanceAsync(accountId, token);
@@ -70,11 +66,9 @@ namespace FintechStatsPlatform.Controllers
 		{
 			try
 			{
-				userId = User.FindFirst("sub")?.Value ?? "";
+				var token = _banksService.GetTinkAccessToken(code);
 
-				var token = _banksService.GetTinkAccessToken(code, scope: "accounts:read transactions:read user:read balances:read");
-
-				HttpContext.Response.Cookies.Append("other_bank_token",token,new CookieOptions {
+				HttpContext.Response.Cookies.Append(_tinkJwtTokenKey,token,new CookieOptions {
 					HttpOnly = true,
 					Secure = true,
 					SameSite = SameSiteMode.Strict,
@@ -87,7 +81,6 @@ namespace FintechStatsPlatform.Controllers
 			}
 			catch (HttpRequestException ex)
 			{
-				// Помилка при зверненні до Tink API
 				return StatusCode(502, new { error = "Помилка при з'єднанні з банком", details = ex.Message });
 			}
 			catch (Exception ex)

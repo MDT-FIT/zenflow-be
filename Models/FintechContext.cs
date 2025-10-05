@@ -6,9 +6,9 @@ namespace FintechStatsPlatform.Models
     public class FintechContext(DbContextOptions<FintechContext> options)
         : DbContext(options)
     {
-        public DbSet<User> Users { get; set; }
-        public DbSet<BankConfig> Banks { get; set; }
-        public DbSet<BankAccount> BankAccounts { get; set; }
+        public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<BankConfig> Banks { get; set; }
+        public virtual DbSet<BankAccount> BankAccounts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

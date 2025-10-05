@@ -17,8 +17,6 @@ namespace FintechStatsPlatform.Services
 
         public BankService(HttpClient httpClient, FintechContext context)
         {
-            var tinkLink = Environment.GetEnvironmentVariable("TINK_FLOW_LINK") ?? "";
-
             _clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID") ?? "";
             _clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET") ?? "";
             _httpClient = new HttpClient();
@@ -52,10 +50,10 @@ namespace FintechStatsPlatform.Services
         {
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"https://api.tink.com/api/v1/accounts/{accountId}/balances"
+                $"{BaseApiLink}/api/v1/accounts/{accountId}/balances"
             );
 
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", userAccessToken);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
 
             var response = await _httpClient.SendAsync(request);
 
@@ -65,6 +63,7 @@ namespace FintechStatsPlatform.Services
             }
 
             var content = await response.Content.ReadAsStringAsync();
+
             return JsonSerializer.Deserialize<BalanceResponse>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -94,11 +93,9 @@ namespace FintechStatsPlatform.Services
 
             var bank = _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER);
 
-            // FIX ME: WTF the bankId violates the foreign key constraint ????
             foreach (var tinkAccount in accountsJson.EnumerateArray())
             {
-                string id = tinkAccount.GetProperty("id").GetString();
-                Console.WriteLine(id);
+                string id = tinkAccount.GetProperty("id").GetString() ?? "";
                 string fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
 
                 userAccountsList.Add(new BankAccount

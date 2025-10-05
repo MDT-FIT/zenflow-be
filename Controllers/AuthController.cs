@@ -1,7 +1,6 @@
 ﻿using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,18 +13,14 @@ namespace FintechStatsPlatform.Controllers
     [Route("api/zenflow/[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly string _jwtTokenKey = Environment.GetEnvironmentVariable("AUTH_JWT_TOKEN") ?? "jwt_token";
         private readonly AuthService _authService;
         private readonly ILogger<AuthController> _logger;
         private readonly FintechContext _context;
-
-        private readonly UserService _usersService;
-        private PasswordHasher<string> passwordHasher;
         public AuthController(AuthService authService, ILogger<AuthController> logger, UserService usersService, FintechContext context)
         {
             _authService = authService;
             _logger = logger;
-            _usersService = usersService;
-            passwordHasher = new PasswordHasher<string>();
             _context = context;
         }
 
@@ -56,8 +51,8 @@ namespace FintechStatsPlatform.Controllers
                     request.Password
                 );
 
-                // Get id token from oAuth and save into our extended DB
                 var tokenResponse = await _authService.LogInAsync(request.Email, request.Password);
+
                 var handler = new JwtSecurityTokenHandler();
                 var idToken = handler.ReadJwtToken(tokenResponse.IdToken);
 
@@ -68,16 +63,13 @@ namespace FintechStatsPlatform.Controllers
                 _logger.LogInformation("User successfully registered: {Email}", request.Email);
 
 
-                HttpContext.Response.Cookies.Append(
-"jwt_token",
-tokenResponse.AccessToken,
-new CookieOptions
-{
-    HttpOnly = true,
-    Secure = true,
-    SameSite = SameSiteMode.Strict,
-    Expires = DateTimeOffset.UtcNow.AddHours(1)
-});
+                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                });
 
 
                 return Ok(new
@@ -133,17 +125,13 @@ new CookieOptions
                 _logger.LogInformation("User successfully logged in: {Email}", request.Email);
 
 
-                HttpContext.Response.Cookies.Append(
-"jwt_token",
-tokenResponse.AccessToken,
-new CookieOptions
-{
-    HttpOnly = true,
-    Secure = true,
-    SameSite = SameSiteMode.Strict,
-    Expires = DateTimeOffset.UtcNow.AddHours(1)
-});
-
+                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Strict,
+                    Expires = DateTimeOffset.UtcNow.AddHours(1)
+                });
 
                 return Ok(new
                 {
@@ -208,7 +196,7 @@ new CookieOptions
         [HttpPost("log-out")]
         public IActionResult LogOut([FromBody] string accessToken)
         {
-            HttpContext.Response.Cookies.Delete("jwt_token");
+            HttpContext.Response.Cookies.Delete(_jwtTokenKey);
 
             _authService.LogOut();
 

@@ -1,20 +1,16 @@
 ﻿using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http;
 
 namespace FintechStatsPlatform.Services
 {
     public class UserService
     {
         private readonly FintechContext _context;
-        private readonly HttpClient _httpClient;
 
         public UserService(HttpClient httpClient, FintechContext context)
         {
             _context = context;
-            _httpClient = httpClient;
         }
-
 
         public async Task<User> GetUserByEmailAsync(string email)
         {

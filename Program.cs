@@ -1,10 +1,8 @@
 using DotNetEnv;
-using DotNetEnv;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FintechStatsPlatform
@@ -36,26 +34,26 @@ namespace FintechStatsPlatform
             builder.Services.AddSwaggerGen();
 
             // DI registration for each service
-            builder.Services.AddScoped<BankService>(provider =>
+            builder.Services.AddScoped(provider =>
             {
                 var context = provider.GetRequiredService<FintechContext>();
                 var httpClient = provider.GetRequiredService<HttpClient>();
 
                 return new BankService(httpClient, context);
             });
-            builder.Services.AddScoped<UserService>(provider =>
+            builder.Services.AddScoped(provider =>
             {
                 var context = provider.GetRequiredService<FintechContext>();
                 var httpClient = provider.GetRequiredService<HttpClient>();
 
                 return new UserService(httpClient, context);
             });
-            builder.Services.AddScoped<AuthService>(provider =>
+            builder.Services.AddScoped(provider =>
             {
                 var httpClient = provider.GetRequiredService<HttpClient>();
                 var configuration = provider.GetRequiredService<IConfiguration>();
 
-                return new Services.AuthService(httpClient, configuration);
+                return new AuthService(httpClient, configuration);
             });
 
             // JWT Authentication для Auth0

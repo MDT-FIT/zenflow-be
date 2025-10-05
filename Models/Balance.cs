@@ -5,8 +5,6 @@
 
         public string UserId { get; set; }
 
-        private string AccountId { get; set; }
-
         public long Amount { get; set; }
 
         public int Scale { get; set; }
