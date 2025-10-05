@@ -257,38 +257,5 @@ namespace FintechStatsPlatform.Services
             // Повертаємо JSON з інформацією про користувача
             return JsonSerializer.Serialize(userInfo);
         }
-
-        public async Task<string> GetUserTokenAsync(string email, string password)
-        {
-            var requestBody = new
-            {
-                grant_type = "http://auth0.com/oauth/grant-type/password-realm",
-                username = email,
-                password = password,
-                client_id = _clientId,
-                client_secret = _clientSecret,
-                audience = _audience,          // Тут має бути https://banking-api
-                scope = "openid profile email balances:read offline_access",
-                realm = _connectionName
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(requestBody),
-                Encoding.UTF8,
-                "application/json"
-            );
-
-            var response = await _httpClient.PostAsync($"https://{_domain}/oauth/token", content);
-            var responseContent = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Failed to get user token: {responseContent}");
-            }
-
-            var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent);
-            return tokenResponse?.AccessToken ?? throw new Exception("No access token returned");
-        }
-
     }
 }

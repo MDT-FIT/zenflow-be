@@ -72,7 +72,7 @@ namespace FintechStatsPlatform.Controllers
 			{
 				userId = User.FindFirst("sub")?.Value ?? "";
 
-				var token = _banksService.GetTinkAccessToken(code, scope: "accounts:read");
+				var token = _banksService.GetTinkAccessToken(code, scope: "accounts:read transactions:read user:read balances:read");
 
 				HttpContext.Response.Cookies.Append("other_bank_token",token,new CookieOptions {
 					HttpOnly = true,

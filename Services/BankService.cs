@@ -98,6 +98,7 @@ namespace FintechStatsPlatform.Services
             foreach (var tinkAccount in accountsJson.EnumerateArray())
             {
                 string id = tinkAccount.GetProperty("id").GetString();
+                Console.WriteLine(id);
                 string fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
 
                 userAccountsList.Add(new BankAccount
@@ -113,7 +114,7 @@ namespace FintechStatsPlatform.Services
             await _context.SaveChangesAsync();
         }
 
-        public string GetTinkAccessToken(string code = "", string scope = "")
+        public string GetTinkAccessToken(string code = "")
         {
 
             var parameters = new Dictionary<string, string>()
@@ -121,7 +122,7 @@ namespace FintechStatsPlatform.Services
                 { "grant_type", "authorization_code" },
                 { "code", code },
                 { "client_id", _clientId },
-                { "client_secret", _clientSecret }
+                { "client_secret", _clientSecret },
             };
 
             var content = new FormUrlEncodedContent(parameters);
