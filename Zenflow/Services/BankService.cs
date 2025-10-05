@@ -9,7 +9,7 @@ namespace FintechStatsPlatform.Services
 {
     public class BankService
     {
-        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_TINK_API_LINK") ?? "";
+        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_API_LINK") ?? "";
         private readonly string _clientId;
         private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
@@ -99,10 +99,9 @@ namespace FintechStatsPlatform.Services
                 string fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
 
 
-                long balanceMinorUnits = 0;
                 int scale = 0;
-                string currency = "EUR";
-                int currencyMinorUnits = 2;
+                long result = 0;
+                long unscaled = 0;
 
                 try
                 {
@@ -112,24 +111,12 @@ namespace FintechStatsPlatform.Services
                         .GetProperty("amount")
                         .GetProperty("value");
 
-                    long unscaled = long.Parse(value.GetProperty("unscaledValue").GetString());
+                    unscaled = long.Parse(value.GetProperty("unscaledValue").GetString());
                     scale = int.Parse(value.GetProperty("scale").GetString());
+                    result = unscaled *  (long)Math.Pow(10, -scale);
 
-                    if (value.TryGetProperty("currency", out var currencyProp))
-                    {
-                        currency = currencyProp.GetString();
-                        currencyMinorUnits = currency switch
-                        {
-                            "JPY" => 0,
-                            "USD" => 2,
-                            "PLN" => 2,
-                            "EUR" => 2,
-                            _ => 2
-                        };
-                    }
-                    balanceMinorUnits = (long)Math.Round(unscaled * Pow10(scale + currencyMinorUnits), MidpointRounding.AwayFromZero);
 
-                    Console.WriteLine($"Account {id}: unscaledValue={unscaled}, scale={scale}, balanceMinorUnits={balanceMinorUnits}");
+                    Console.WriteLine($"Account {id}: unscaledValue={unscaled}, scale={scale}");
 
                 }
                 catch (Exception ex)
@@ -142,7 +129,7 @@ namespace FintechStatsPlatform.Services
                     Id = fullBankId,
                     UserId = userId,
                     BankId = bank?.Id ?? throw new Exception("Bank OTHER not found"),
-                    Balance = balanceMinorUnits,
+                    Balance = result,
                     CurrencyScale = scale
                 });
             }
@@ -150,17 +137,17 @@ namespace FintechStatsPlatform.Services
             await _context.BankAccounts.AddRangeAsync(userAccountsList);
             await _context.SaveChangesAsync();
         }
-        decimal Pow10(int exponent)
-        {
-            decimal result = 1m;
-            if (exponent > 0)
-                for (int i = 0; i < exponent; i++)
-                    result *= 10m;
-            else if (exponent < 0)
-                for (int i = 0; i < -exponent; i++)
-                    result /= 10m;
-            return result;
-        }
+        //decimal Pow10(int exponent)
+        //{
+        //    decimal result = 1m;
+        //    if (exponent > 0)
+        //        for (int i = 0; i < exponent; i++)
+        //            result *= 10m;
+        //    else if (exponent < 0)
+        //        for (int i = 0; i < -exponent; i++)
+        //            result /= 10m;
+        //    return result;
+        //}
 
 
         public string GetTinkAccessToken(string code = "")
