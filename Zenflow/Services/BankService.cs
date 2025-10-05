@@ -95,21 +95,73 @@ namespace FintechStatsPlatform.Services
 
             foreach (var tinkAccount in accountsJson.EnumerateArray())
             {
-                string id = tinkAccount.GetProperty("id").GetString() ?? "";
+                string id = tinkAccount.GetProperty("id").GetString();
                 string fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
+
+
+                long balanceMinorUnits = 0;
+                int scale = 0;
+                string currency = "EUR";
+                int currencyMinorUnits = 2;
+
+                try
+                {
+                    var value = tinkAccount
+                        .GetProperty("balances")
+                        .GetProperty("booked")
+                        .GetProperty("amount")
+                        .GetProperty("value");
+
+                    long unscaled = long.Parse(value.GetProperty("unscaledValue").GetString());
+                    scale = int.Parse(value.GetProperty("scale").GetString());
+
+                    if (value.TryGetProperty("currency", out var currencyProp))
+                    {
+                        currency = currencyProp.GetString();
+                        currencyMinorUnits = currency switch
+                        {
+                            "JPY" => 0,
+                            "USD" => 2,
+                            "PLN" => 2,
+                            "EUR" => 2,
+                            _ => 2
+                        };
+                    }
+                    balanceMinorUnits = (long)Math.Round(unscaled * Pow10(scale + currencyMinorUnits), MidpointRounding.AwayFromZero);
+
+                    Console.WriteLine($"Account {id}: unscaledValue={unscaled}, scale={scale}, balanceMinorUnits={balanceMinorUnits}");
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"No booked balance for account {id}: {ex.Message}");
+                }
 
                 userAccountsList.Add(new BankAccount
                 {
                     Id = fullBankId,
                     UserId = userId,
-                    BankId = bank != null ? bank.Id : "",
-                    Balance = 0
+                    BankId = bank?.Id ?? throw new Exception("Bank OTHER not found"),
+                    Balance = balanceMinorUnits,
+                    CurrencyScale = scale
                 });
             }
 
             await _context.BankAccounts.AddRangeAsync(userAccountsList);
             await _context.SaveChangesAsync();
         }
+        decimal Pow10(int exponent)
+        {
+            decimal result = 1m;
+            if (exponent > 0)
+                for (int i = 0; i < exponent; i++)
+                    result *= 10m;
+            else if (exponent < 0)
+                for (int i = 0; i < -exponent; i++)
+                    result /= 10m;
+            return result;
+        }
+
 
         public string GetTinkAccessToken(string code = "")
         {
