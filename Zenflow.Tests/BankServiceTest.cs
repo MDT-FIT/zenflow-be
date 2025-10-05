@@ -1,14 +1,17 @@
 using FintechStatsPlatform.Enumirators;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using FluentAssertions;
+using Moq.Protected;
+using System.Net;
+using System.Text.Json;
 
 namespace Zenflow.Tests;
 public class BankServiceTests
 {
-    private readonly BankService _service;
+    private BankService _service;
     private Mock<FintechContext> contextMock;
     public BankServiceTests()
     {
@@ -69,6 +72,55 @@ public class BankServiceTests
         result.Should().BeEquivalentTo(new List<BankConfig> { new BankConfig { Name = BankName.MONO } }, options => options
     .Including(b => b.Name));
     }
+    [Fact(DisplayName = "GetBalance returns a response")]
+    public async Task GetBalanceTest()
+    {
+        var accountId = "account-id";
+        var accessToken = "fake-access-token";
+        var expectedBalance = 0;
 
+        var fakeResponse = new BalanceResponse
+        {
+            Balances = new BalancesDetails
+            {
+                Available = new BalanceValue
+                {
+                    CurrencyCode = "USD",
+                    Scale = 2,
+                    UnscaledValue = expectedBalance
+                },
+            },
+        };
 
+        var httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+
+        httpMessageHandlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req =>
+                    req.Method == HttpMethod.Get &&
+                    req.Headers.Authorization != null &&
+                    req.Headers.Authorization.Parameter == accessToken
+                    ),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(fakeResponse)),
+            });
+
+        var httpClient = new HttpClient(httpMessageHandlerMock.Object)
+        {
+            BaseAddress = new Uri("https://fakeapi.local/")
+        };
+
+        _service = new BankService(httpClient, contextMock.Object);
+        var result = await _service.GetBalanceAsync(accountId, accessToken);
+
+        result.Should().NotBeNull();
+        result.Balances.Available.UnscaledValue.Should().Be(expectedBalance);
+        result.Balances.Available.CurrencyCode.Should().Be(fakeResponse.Balances.Available.CurrencyCode);
+    }
 }
