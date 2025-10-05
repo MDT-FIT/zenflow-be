@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zenflow.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+13493e9f9cc761a0a369ce98b00949ca3e63266c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7017d36e2f388bdb9ea31ed48a459792849f86a0")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zenflow.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zenflow.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
