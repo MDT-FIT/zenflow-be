@@ -1,11 +1,11 @@
 using DotNetEnv;
+using DotNetEnv;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using DotNetEnv;
 
 namespace FintechStatsPlatform
 {
@@ -28,36 +28,35 @@ namespace FintechStatsPlatform
             // Controllers
             builder.Services.AddControllers();
 
+            // HttpsClient
+            builder.Services.AddSingleton<HttpClient>();
+
             // Swagger/OpenAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            // Memory cache
-            builder.Services.AddMemoryCache();
-            // Додаємо BankService у DI контейнер
-            builder.Services.AddScoped<BanksService>(provider =>
-            {
-                var cache = provider.GetRequiredService<IMemoryCache>();
-                var context = provider.GetRequiredService<FintechContext>();
-                return new BanksService(clientId, clientSecret, cache, context);
-            });
-            builder.Services.AddScoped<UsersService>(provider =>
+            // DI registration for each service
+            builder.Services.AddScoped<BankService>(provider =>
             {
                 var context = provider.GetRequiredService<FintechContext>();
-                return new UsersService(context);
-            });
+                var httpClient = provider.GetRequiredService<HttpClient>();
 
-            // Реєструємо AuthService у DI
-            builder.Services.AddScoped<Services.AuthService>(provider =>
+                return new BankService(httpClient, context);
+            });
+            builder.Services.AddScoped<UserService>(provider =>
+            {
+                var context = provider.GetRequiredService<FintechContext>();
+                var httpClient = provider.GetRequiredService<HttpClient>();
+
+                return new UserService(httpClient, context);
+            });
+            builder.Services.AddScoped<AuthService>(provider =>
             {
                 var httpClient = provider.GetRequiredService<HttpClient>();
                 var configuration = provider.GetRequiredService<IConfiguration>();
+
                 return new Services.AuthService(httpClient, configuration);
             });
-
-            // AuthService з HttpClient для Auth0 (Scoped lifetime для HttpClient)
-            builder.Services.AddHttpClient<AuthService>();
-            builder.Services.AddScoped<AuthService>();
 
             // JWT Authentication для Auth0
             var domain = builder.Configuration["Auth0:Domain"];
