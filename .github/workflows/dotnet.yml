@@ -1,23 +1,15 @@
 name: .NET Core XUnit Tests
-
 on:
   push:
     branches: [ "main", "master" ]
   pull_request:
     branches: [ "main", "master" ]
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   test:
-    # Specify the runner environment
     runs-on: ubuntu-latest
     
-    # Define environment variables (optional, but good practice)
-    env:
-      DOTNET_VERSION: '8.0.x'
-      TEST_PROJECT_PATH: 'Zenflow.Tests/Zenflow.Tests.csproj'
-
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -25,14 +17,13 @@ jobs:
     - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: '8.0.x' 
 
     - name: Restore Dependencies
-      run: dotnet restore
+      run: dotnet restore Zenflow.Tests 
 
     - name: Build Solution
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build Zenflow.Tests --configuration Release --no-restore
 
     - name: Run XUnit Tests
-      # The 'test' command automatically finds and runs XUnit tests in the specified project
-      run: dotnet test ./Zenflow.Tests --configuration Release --no-build --verbosity normal 
+      run: dotnet test Zenflow.Tests --configuration Release --no-build --verbosity normal
