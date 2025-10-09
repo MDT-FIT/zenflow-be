@@ -2,6 +2,7 @@
 {
     public class Balance : AbstractEntity
     {
+        public string AccountId { get; set; }
 
         public string UserId { get; set; }
 

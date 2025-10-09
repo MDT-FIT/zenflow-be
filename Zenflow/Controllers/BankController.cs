@@ -19,23 +19,19 @@ namespace FintechStatsPlatform.Controllers
 
 			return Ok(allUserConfigs);
 		}
-        [HttpGet("balance")]
-        public async Task<IActionResult> GetBalance([FromQuery] string accountId)
+        [HttpGet("balances")]
+        public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
         {
-            if (string.IsNullOrWhiteSpace(accountId))
-                return BadRequest(new { message = "AccountId is required." });
+            if (accountIds.Equals(null) || !accountIds.Any())
+                return BadRequest(new { message = "At least one accountId is required." });
+
+            if (userId == null)
+                return BadRequest(new { message = "User is required"});
 
             string token = HttpContext.Request.Cookies[_tinkJwtTokenKey] ?? "";
 
             try
             {
-                
-
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized("Missing or expired token");
-                }
-
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { message = "Failed to obtain user access token." });
             }
@@ -46,8 +42,8 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var balance = await _banksService.GetBalanceAsync(accountId, token);
-                return Ok(balance);
+                var balances = await _banksService.GetBalancesAsync(accountIds, token, userId);
+                return Ok(balances);
             }
             catch (HttpRequestException httpEx)
             {
@@ -55,7 +51,7 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Failed to get balance: {ex.Message}" });
+                return StatusCode(500, new { message = $"Failed to get balances: {ex.Message}" });
             }
         }
 
