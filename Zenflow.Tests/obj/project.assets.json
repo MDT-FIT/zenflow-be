@@ -12602,11 +12602,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\MateAcademy\\Zenflow\\Zenflow.Tests\\Zenflow.Tests.csproj",
+      "projectUniqueName": "E:\\MateAcademy\\Zenflow2\\Zenflow.Tests\\Zenflow.Tests.csproj",
       "projectName": "Zenflow.Tests",
-      "projectPath": "E:\\MateAcademy\\Zenflow\\Zenflow.Tests\\Zenflow.Tests.csproj",
+      "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow.Tests\\Zenflow.Tests.csproj",
       "packagesPath": "C:\\Users\\anyaa\\.nuget\\packages\\",
-      "outputPath": "E:\\MateAcademy\\Zenflow\\Zenflow.Tests\\obj\\",
+      "outputPath": "E:\\MateAcademy\\Zenflow2\\Zenflow.Tests\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "D:\\Visual Studio Shared\\NuGetPackages"
@@ -12628,8 +12628,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "E:\\MateAcademy\\Zenflow\\Zenflow\\FintechStatsPlatform.csproj": {
-              "projectPath": "E:\\MateAcademy\\Zenflow\\Zenflow\\FintechStatsPlatform.csproj"
+            "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj": {
+              "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj"
             }
           }
         }
