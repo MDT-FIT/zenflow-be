@@ -4248,7 +4248,7 @@
           "build/net6.0/xunit.runner.visualstudio.props": {}
         }
       },
-      "FintechStatsPlatform/1.0.0": {
+      "Zenflow/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
@@ -4262,10 +4262,10 @@
           "System.IdentityModel.Tokens.Jwt": "8.14.0"
         },
         "compile": {
-          "bin/placeholder/FintechStatsPlatform.dll": {}
+          "bin/placeholder/Zenflow.dll": {}
         },
         "runtime": {
-          "bin/placeholder/FintechStatsPlatform.dll": {}
+          "bin/placeholder/Zenflow.dll": {}
         },
         "frameworkReferences": [
           "Microsoft.AspNetCore.App"
@@ -12577,19 +12577,19 @@
         "xunit.runner.visualstudio.nuspec"
       ]
     },
-    "FintechStatsPlatform/1.0.0": {
+    "Zenflow/1.0.0": {
       "type": "project",
-      "path": "../Zenflow/FintechStatsPlatform.csproj",
-      "msbuildProject": "../Zenflow/FintechStatsPlatform.csproj"
+      "path": "../Zenflow/Zenflow.csproj",
+      "msbuildProject": "../Zenflow/Zenflow.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "FintechStatsPlatform >= 1.0.0",
       "FluentAssertions >= 8.7.1",
       "Microsoft.EntityFrameworkCore.InMemory >= 9.0.9",
       "Microsoft.NET.Test.Sdk >= 17.8.0",
       "Moq >= 4.20.72",
+      "Zenflow >= 1.0.0",
       "coverlet.collector >= 6.0.0",
       "xunit >= 2.5.3",
       "xunit.runner.visualstudio >= 2.5.3"
@@ -12628,8 +12628,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj": {
-              "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj"
+            "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj": {
+              "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj"
             }
           }
         }

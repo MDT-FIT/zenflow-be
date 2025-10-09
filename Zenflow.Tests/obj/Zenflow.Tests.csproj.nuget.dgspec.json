@@ -33,8 +33,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj": {
-                "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj"
+              "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj": {
+                "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj"
               }
             }
           }
@@ -104,12 +104,12 @@
         }
       }
     },
-    "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj": {
+    "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj",
-        "projectName": "FintechStatsPlatform",
-        "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\FintechStatsPlatform.csproj",
+        "projectUniqueName": "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj",
+        "projectName": "Zenflow",
+        "projectPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\Zenflow.csproj",
         "packagesPath": "C:\\Users\\anyaa\\.nuget\\packages\\",
         "outputPath": "E:\\MateAcademy\\Zenflow2\\Zenflow\\obj\\",
         "projectStyle": "PackageReference",
