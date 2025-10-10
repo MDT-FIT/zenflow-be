@@ -84,7 +84,7 @@ namespace FintechStatsPlatform.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Sign up failed for email: {Email}", request.Email);
-
+                Console.WriteLine(ex.Message);
                 return BadRequest(new
                 {
                     error = "Помилка реєстрації",
@@ -151,7 +151,7 @@ namespace FintechStatsPlatform.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Login failed for email: {Email}", request.Email);
-
+                Console.WriteLine(ex.Message);
                 return Unauthorized(new
                 {
                     error = "Невірний email або пароль",
@@ -185,6 +185,7 @@ namespace FintechStatsPlatform.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Token refresh failed");
+                Console.WriteLine(ex.Message);
                 return Unauthorized(new { error = "Невалідний refresh token" });
             }
         }

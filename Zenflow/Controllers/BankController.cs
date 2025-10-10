@@ -1,6 +1,7 @@
 ﻿using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
+using FintechStatsPlatform.Exceptions;
 
 
 namespace FintechStatsPlatform.Controllers
@@ -15,9 +16,21 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet("bank-configs/{userId}")]
 		public IActionResult ListBankConfigs([FromRoute] string userId)
 		{
-			List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
-
-			return Ok(allUserConfigs);
+            try
+            {
+                List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
+                return Ok(allUserConfigs);
+            }
+            catch (ExceptionTypes.NotFoundException ex) 
+            { 
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex.ToString()}");
+                return BadRequest("Something went wrong");
+            }
+			
 		}
         [HttpGet("balances")]
         public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
@@ -44,6 +57,14 @@ namespace FintechStatsPlatform.Controllers
             {
                 var balances = await _banksService.GetBalancesAsync(accountIds, token, userId);
                 return Ok(balances);
+            }
+            catch (ExceptionTypes.JsonParsingException jsonEx) 
+            {
+                return StatusCode(500, jsonEx.Message);
+            }
+            catch (ExceptionTypes.ExternalApiException apiEx) 
+            {
+                return StatusCode(500, apiEx.Message);
             }
             catch (HttpRequestException httpEx)
             {

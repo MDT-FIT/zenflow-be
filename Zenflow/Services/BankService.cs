@@ -1,4 +1,5 @@
 ﻿using FintechStatsPlatform.Enumirators;
+using FintechStatsPlatform.Exceptions;
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using static FintechStatsPlatform.Exceptions.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {
@@ -38,12 +40,10 @@ namespace FintechStatsPlatform.Services
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
-                return new List<BankConfig>();
+                throw new ExceptionTypes.UserNotFoundException("id",userId);
             else
             {
-
                 var allBankConfigs = _context.Banks.ToList();
-
                 List<BankConfig> filterdConfigs = allBankConfigs.Where(config => !user.IsBankConnected(config.Name)).ToList();
                 return filterdConfigs;
             }
@@ -57,9 +57,13 @@ namespace FintechStatsPlatform.Services
                     var balance = await GetBalanceAsync(accountId, token, userId);
                     results.Add(balance);
                 }
+                catch(NotFoundException ex) 
+                {
+                    results.Add(new Balance(userId));
+                }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error occured while attempt of processing account #{accountId} :\n{ex.ToString()}");
+                    Console.WriteLine($"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex.ToString()}");
                 }
 
             return results;
@@ -80,14 +84,9 @@ namespace FintechStatsPlatform.Services
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"Tink API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
-                return new Balance
-                {
-                    AccountId = "N/A",
-                    UserId = userId,
-                    Currency = "N/A",
-                    Scale = 0,
-                    Amount = 0
-                };
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    throw new AccountNotFoundException("id", accountId);
+                throw new ExternalApiException("Tink", $"Status: {response.StatusCode}");
             }
 
             var content = await response.Content.ReadAsStringAsync();
@@ -99,13 +98,12 @@ namespace FintechStatsPlatform.Services
                 .GetProperty("available");
 
             return new Balance
-            {
-                AccountId = doc.RootElement.GetProperty("accountId").GetString(),
-                UserId = userId,
-                Currency = available.GetProperty("currencyCode").GetString(),
-                Amount = available.GetProperty("unscaledValue").GetInt64(),
-                Scale = available.GetProperty("scale").GetInt32()
-            };
+            (   userId,
+                available.GetProperty("unscaledValue").GetInt64(),
+                available.GetProperty("scale").GetInt32(),
+                doc.RootElement.GetProperty("accountId").GetString(),
+                available.GetProperty("currencyCode").GetString()
+            );
         }
 
 
@@ -116,20 +114,33 @@ namespace FintechStatsPlatform.Services
 
         public async Task ConnectOtherBankAsync(string userId, string token)
         {
+            try
+            {
+
+            }
+            catch (ExternalApiException ex)
+            {
+
+            }
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
             var response = await _httpClient.GetAsync($"{BaseApiLink}/data/v2/accounts");
             response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+                throw new ExternalApiException("Tink", $"{response.Content.ToString()}");
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
+            
 
             var accountsJson = doc.RootElement.GetProperty("accounts");
 
             List<BankAccount> userAccountsList = new List<BankAccount>();
 
             var bank = _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER);
+            if (bank == null)
+                throw new BankNotFoundException("OTHER");
 
             foreach (var tinkAccount in accountsJson.EnumerateArray())
             {
@@ -159,14 +170,14 @@ namespace FintechStatsPlatform.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"No booked balance for account {id}: {ex.Message}");
+                    throw new UnexpectedException("attempt to connect to other bank",(CustomException)ex);
                 }
 
                 userAccountsList.Add(new BankAccount
                 {
                     Id = fullBankId,
                     UserId = userId,
-                    BankId = bank?.Id ?? throw new Exception("Bank OTHER not found"),
+                    BankId = bank?.Id ?? throw new BankNotFoundException(bank.Id, "id"),
                     Balance = result,
                     CurrencyScale = scale
                 });
