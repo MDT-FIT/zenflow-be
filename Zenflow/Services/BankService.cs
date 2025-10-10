@@ -2,6 +2,9 @@
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Common;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -45,29 +48,64 @@ namespace FintechStatsPlatform.Services
                 return filterdConfigs;
             }
         }
-
-        public async Task<BalanceResponse> GetBalanceAsync(string accountId, string userAccessToken)
+        public async Task<List<Balance>> GetBalancesAsync(List<string> accountIds, string token, string userId)
         {
+            var results = new List<Balance>();
+            foreach (var accountId in accountIds)
+                try
+                {
+                    var balance = await GetBalanceAsync(accountId, token, userId);
+                    results.Add(balance);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error occured while attempt of processing account #{accountId} :\n{ex.ToString()}");
+                }
+
+            return results;
+        }
+
+        public async Task<Balance> GetBalanceAsync(string accountId, string userAccessToken, string userId)
+        {
+               
+            var results = new List<Balance>();
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
                 $"{BaseApiLink}/api/v1/accounts/{accountId}/balances"
             );
-
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
 
             var response = await _httpClient.SendAsync(request);
 
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception($"Tink API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                Console.WriteLine($"Tink API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                return new Balance
+                {
+                    AccountId = "N/A",
+                    UserId = userId,
+                    Currency = "N/A",
+                    Scale = 0,
+                    Amount = 0
+                };
             }
 
             var content = await response.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<BalanceResponse>(content, new JsonSerializerOptions
+            using var doc = JsonDocument.Parse(content);
+
+            var available = doc.RootElement
+                .GetProperty("balances")
+                .GetProperty("available");
+
+            return new Balance
             {
-                PropertyNameCaseInsensitive = true
-            });
+                AccountId = doc.RootElement.GetProperty("accountId").GetString(),
+                UserId = userId,
+                Currency = available.GetProperty("currencyCode").GetString(),
+                Amount = available.GetProperty("unscaledValue").GetInt64(),
+                Scale = available.GetProperty("scale").GetInt32()
+            };
         }
 
 
