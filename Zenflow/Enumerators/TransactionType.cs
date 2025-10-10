@@ -1,16 +1,21 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace FintechStatsPlatform.Enumirators
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum TransactionType
     {
         [Description("INCOME")]
         INCOME,
 
-        [Description("EXPENSES")]
-        EXPENSERS,
+        [Description("EXPENSE")]
+        EXPENSER,
 
-        [Description("TRANSFERS")]
-        TRANSFERS
+        [Description("TRANSFER")]
+        TRANSFER,
+
+        [Description("DEFAULT")]
+        DEFAULT
     }
 }
