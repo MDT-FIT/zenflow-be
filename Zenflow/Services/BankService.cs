@@ -1,9 +1,11 @@
-﻿using FintechStatsPlatform.Enumirators;
+﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.Enumirators;
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace FintechStatsPlatform.Services
 {
@@ -24,9 +26,60 @@ namespace FintechStatsPlatform.Services
             _context = context;
         }
 
-        public List<Transaction> ListTransactions(TransactionFilter filter)
+        public async Task<List<TinkTransaction>> ListTransactionsAsync(TransactionFilter filter, string userAccessToken)
         {
-            throw new NotImplementedException("Has been not implemented yet");
+            // Get User accounts' ids if there is none
+            if (filter.AccountIds == null || filter.AccountIds.Length == 0)
+            {
+                filter.AccountIds = [.. GetUserAccounts(filter.UserId).Select(a => a.Id)];
+            }
+
+            // Define parameters and convert them to JSON content
+            var parameters = new
+            {
+                accounts = filter.AccountIds,
+                startDate = filter.DateFrom,
+                endDate = filter.DateTo,
+                limit = 10000,
+            };
+
+            var jsonContent = JsonContent.Create(parameters);
+
+            // Form POST request to Tink's API
+            var requestMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Post,
+                Content = jsonContent,
+                RequestUri = new Uri($"{BaseApiLink}/api/v1/search"),
+            };
+
+            // Add header with user's access token
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+
+            var response = await _httpClient.SendAsync(requestMessage);
+
+            // Throw exception in case request failed
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine("raw transactions respose: ");
+            Console.WriteLine(content);
+
+            var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            var transactions = apiResponse?.Results
+                .Select(r => r.Transaction).ToList();
+
+            return transactions ?? [];
+        }
+
+        private List<BankAccount> GetUserAccounts(string userId)
+        {
+            return [.. _context.BankAccounts.Where(a => a.UserId == userId)];
         }
 
         public List<BankConfig> ListBankConfigs(string userId)
@@ -113,7 +166,7 @@ namespace FintechStatsPlatform.Services
 
                     unscaled = long.Parse(value.GetProperty("unscaledValue").GetString());
                     scale = int.Parse(value.GetProperty("scale").GetString());
-                    result = unscaled *  (long)Math.Pow(10, -scale);
+                    result = unscaled * (long)Math.Pow(10, -scale);
 
 
                     Console.WriteLine($"Account {id}: unscaledValue={unscaled}, scale={scale}");

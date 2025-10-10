@@ -1,6 +1,8 @@
-﻿using FintechStatsPlatform.Models;
+﻿using FintechStatsPlatform.Filters;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
 
 
 namespace FintechStatsPlatform.Controllers
@@ -19,6 +21,34 @@ namespace FintechStatsPlatform.Controllers
 
 			return Ok(allUserConfigs);
 		}
+
+        [HttpPost("transactions")]
+        public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
+        {
+            if (filter is null || filter.UserId is null) return BadRequest();
+
+            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is invalid or expired");
+            }
+
+            try
+            {
+                var transactions = await _banksService.ListTransactionsAsync(filter, token);
+                return Ok(transactions);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, ex.Message);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
         [HttpGet("balance")]
         public async Task<IActionResult> GetBalance([FromQuery] string accountId)
         {
