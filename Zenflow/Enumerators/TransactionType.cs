@@ -7,7 +7,7 @@ namespace FintechStatsPlatform.Enumirators
         [Description("INCOME")]
         INCOME,
 
-        [Description("EXPENSERS")]
+        [Description("EXPENSES")]
         EXPENSERS,
 
         [Description("TRANSFERS")]
