@@ -1,5 +1,5 @@
 
-﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Enumirators;
 using FintechStatsPlatform.Exceptions;
 using FintechStatsPlatform.Filters;
@@ -41,54 +41,52 @@ namespace FintechStatsPlatform.Services
                 filter.AccountIds = [.. GetUserAccounts(filter.UserId).Select(a => a.Id)];
             }
 
-            filter.AccountIds = [.. filter.AccountIds.Select(a => a.Replace("tink-", ""))];
+            var tinkAccountIds = filter.AccountIds.Where(a => a.StartsWith("tink")).Select(a => a.Replace("tink-", "")).ToArray();
+            var tinkTransactions = new List<TinkTransaction>();
 
             // Define parameters and convert them to JSON content
-            var parameters = new
-            {
-                accounts = filter.AccountIds,
-                startDate = filter.DateFrom,
-                endDate = filter.DateTo,
-            };
-
+            var parameters = new { accounts = filter.AccountIds, startDate = filter.DateFrom, endDate = filter.DateTo };
             var jsonContent = JsonContent.Create(parameters);
 
-            // Form POST request to Tink's API
-            var requestMessage = new HttpRequestMessage
+            // Tink Api request
+            if (tinkAccountIds != null && tinkAccountIds.Length > 0)
             {
-                Method = HttpMethod.Post,
-                Content = jsonContent,
-                RequestUri = new Uri($"{BaseApiLink}/api/v1/search"),
-            };
+                // Form POST request to Tink's API
+                var requestMessage = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Post,
+                    Content = jsonContent,
+                    RequestUri = new Uri($"{BaseApiLink}/api/v1/search"),
+                };
 
-            // Add header with user's access token
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+                // Add header with user's access token
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
 
-            var response = await _httpClient.SendAsync(requestMessage);
+                // Send request and throw exception in case it failed
+                var response = await _httpClient.SendAsync(requestMessage);
+                response.EnsureSuccessStatusCode();
 
-            // Throw exception in case request failed
-            response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                tinkTransactions = apiResponse?.Results
+                    .Select(r => r.Transaction).ToList();
+            }
 
-            var content = await response.Content.ReadAsStringAsync();
-
-            var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            var transactions = apiResponse?.Results
-                .Select(r => r.Transaction).ToList();
+            // Add mono logic later {...}
 
             // Attach User's id to each transaction
-            if (transactions != null)
+            if (tinkTransactions != null)
             {
-                foreach(var transaction in transactions)
+                foreach (var transaction in tinkTransactions)
                 {
                     transaction.UserId = filter.UserId;
                 }
             }
 
-            return transactions ?? [];
+            return tinkTransactions ?? [];
         }
 
         private List<BankAccount> GetUserAccounts(string userId)
@@ -102,7 +100,7 @@ namespace FintechStatsPlatform.Services
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
-                throw new ExceptionTypes.UserNotFoundException("id",userId);
+                throw new ExceptionTypes.UserNotFoundException("id", userId);
             else
             {
                 var allBankConfigs = _context.Banks.ToList();
@@ -119,7 +117,7 @@ namespace FintechStatsPlatform.Services
                     var balance = await GetBalanceAsync(accountId, token, userId);
                     results.Add(balance);
                 }
-                catch(NotFoundException ex) 
+                catch (NotFoundException ex)
                 {
                     results.Add(new Balance(userId));
                 }
@@ -133,7 +131,7 @@ namespace FintechStatsPlatform.Services
 
         public async Task<Balance> GetBalanceAsync(string accountId, string userAccessToken, string userId)
         {
-               
+
             var results = new List<Balance>();
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
@@ -160,7 +158,7 @@ namespace FintechStatsPlatform.Services
                 .GetProperty("available");
 
             return new Balance
-            (   userId,
+            (userId,
                 available.GetProperty("unscaledValue").GetInt64(),
                 available.GetProperty("scale").GetInt32(),
                 doc.RootElement.GetProperty("accountId").GetString(),
@@ -194,7 +192,7 @@ namespace FintechStatsPlatform.Services
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
-            
+
 
             var accountsJson = doc.RootElement.GetProperty("accounts");
 
@@ -232,7 +230,7 @@ namespace FintechStatsPlatform.Services
                 }
                 catch (Exception ex)
                 {
-                    throw new UnexpectedException("attempt to connect to other bank",(CustomException)ex);
+                    throw new UnexpectedException("attempt to connect to other bank", (CustomException)ex);
                 }
 
                 userAccountsList.Add(new BankAccount
