@@ -3,6 +3,7 @@ using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using FintechStatsPlatform.Exceptions;
 
 
 namespace FintechStatsPlatform.Controllers
@@ -17,10 +18,23 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet("bank-configs/{userId}")]
 		public IActionResult ListBankConfigs([FromRoute] string userId)
 		{
-			List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
-
-			return Ok(allUserConfigs);
+            try
+            {
+                List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
+                return Ok(allUserConfigs);
+            }
+            catch (ExceptionTypes.NotFoundException ex) 
+            { 
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex.ToString()}");
+                return BadRequest("Something went wrong");
+            }
+			
 		}
+
 
         [HttpPost("transactions")]
         public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
@@ -48,24 +62,21 @@ namespace FintechStatsPlatform.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        
+        [HttpGet("balances")]
+        public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
 
-        [HttpGet("balance")]
-        public async Task<IActionResult> GetBalance([FromQuery] string accountId)
         {
-            if (string.IsNullOrWhiteSpace(accountId))
-                return BadRequest(new { message = "AccountId is required." });
+            if (accountIds.Equals(null) || !accountIds.Any())
+                return BadRequest(new { message = "At least one accountId is required." });
+
+            if (userId == null)
+                return BadRequest(new { message = "User is required"});
 
             string token = HttpContext.Request.Cookies[_tinkJwtTokenKey] ?? "";
 
             try
             {
-                
-
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized("Missing or expired token");
-                }
-
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { message = "Failed to obtain user access token." });
             }
@@ -76,8 +87,16 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var balance = await _banksService.GetBalanceAsync(accountId, token);
-                return Ok(balance);
+                var balances = await _banksService.GetBalancesAsync(accountIds, token, userId);
+                return Ok(balances);
+            }
+            catch (ExceptionTypes.JsonParsingException jsonEx) 
+            {
+                return StatusCode(500, jsonEx.Message);
+            }
+            catch (ExceptionTypes.ExternalApiException apiEx) 
+            {
+                return StatusCode(500, apiEx.Message);
             }
             catch (HttpRequestException httpEx)
             {
@@ -85,7 +104,7 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Failed to get balance: {ex.Message}" });
+                return StatusCode(500, new { message = $"Failed to get balances: {ex.Message}" });
             }
         }
 

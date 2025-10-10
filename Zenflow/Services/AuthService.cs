@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static FintechStatsPlatform.Exceptions.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {
@@ -102,11 +103,11 @@ namespace FintechStatsPlatform.Services
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Auth0 signup failed: {responseContent}");
-            }
+                throw new Auth0Exception($"Signup failed: {responseContent}");
 
-            var signupResponse = JsonSerializer.Deserialize<Auth0UserInfo>(responseContent);
+            var signupResponse = JsonSerializer.Deserialize<Auth0UserInfo>(responseContent)
+                ?? throw new Auth0DeserializationException("signup response");
+
             await LogInAsync(email, password);
 
             return signupResponse ?? throw new Exception("Failed to deserialize signup response");
@@ -144,9 +145,7 @@ namespace FintechStatsPlatform.Services
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Auth0 authentication failed: {responseContent}");
-            }
+                throw new Auth0Exception($"Authentication failed: {responseContent}");
 
             var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
                 ?? throw new Exception("Failed to deserialize Auth0 response");
@@ -173,15 +172,13 @@ namespace FintechStatsPlatform.Services
 
             var response = await _httpClient.SendAsync(request);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Failed to retrieve user info: {errorContent}");
-            }
-
             var content = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Auth0Exception($"Failed to retrieve user info: {content}");
+
             return JsonSerializer.Deserialize<Auth0UserInfo>(content)
-                ?? throw new Exception("Failed to deserialize user info");
+                ?? throw new Auth0DeserializationException("user info");
         }
 
         /// <summary>
@@ -220,12 +217,10 @@ namespace FintechStatsPlatform.Services
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Failed to refresh token: {responseContent}");
-            }
+                throw new Auth0Exception($"Failed to refresh token: {responseContent}");
 
             return JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
-                ?? throw new Exception("Failed to deserialize refresh token response");
+                ?? throw new Auth0DeserializationException("refresh token response");
         }
 
         /// <summary>
@@ -282,11 +277,11 @@ namespace FintechStatsPlatform.Services
             var responseContent = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Failed to get user token: {responseContent}");
-            }
+                throw new Auth0Exception($"Failed to get user token: {responseContent}");
 
-            var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent);
+            var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
+            ?? throw new Auth0DeserializationException("token response");
+
             return tokenResponse?.AccessToken ?? throw new Exception("No access token returned");
         }
 
