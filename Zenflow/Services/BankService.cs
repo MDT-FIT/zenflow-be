@@ -41,13 +41,14 @@ namespace FintechStatsPlatform.Services
                 filter.AccountIds = [.. GetUserAccounts(filter.UserId).Select(a => a.Id)];
             }
 
+            filter.AccountIds = [.. filter.AccountIds.Select(a => a.Replace("tink-", ""))];
+
             // Define parameters and convert them to JSON content
             var parameters = new
             {
                 accounts = filter.AccountIds,
                 startDate = filter.DateFrom,
                 endDate = filter.DateTo,
-                limit = 10000,
             };
 
             var jsonContent = JsonContent.Create(parameters);
@@ -70,9 +71,6 @@ namespace FintechStatsPlatform.Services
 
             var content = await response.Content.ReadAsStringAsync();
 
-            Console.WriteLine("raw transactions respose: ");
-            Console.WriteLine(content);
-
             var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -80,6 +78,15 @@ namespace FintechStatsPlatform.Services
 
             var transactions = apiResponse?.Results
                 .Select(r => r.Transaction).ToList();
+
+            // Attach User's id to each transaction
+            if (transactions != null)
+            {
+                foreach(var transaction in transactions)
+                {
+                    transaction.UserId = filter.UserId;
+                }
+            }
 
             return transactions ?? [];
         }

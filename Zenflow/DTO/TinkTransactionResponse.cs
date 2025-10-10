@@ -26,27 +26,51 @@ namespace FintechStatsPlatform.DTO
 
     public class TinkTransaction
     {
-        [JsonPropertyName("categoryType")]
+        [JsonPropertyName("type")]
         public string CategoryTypeString { private get; init; }
+
         [JsonPropertyName("date")]
         public long DateUnixEpoch { private get; init; }
+
         [JsonPropertyName("currencyDenominatedOriginalAmount")]
         public TinkOriginalAmount OriginalAmount { private get; init; }
-        public string Id { get; init; }
-        public string AccountId { get; init; }
-        public bool Pending { get; init; }
 
-        [JsonIgnore] 
-        public TransactionType CategoryType
+        [JsonPropertyName("pending")]
+        public bool Pending { private get; init; }
+
+        [JsonPropertyName("id")]
+        public string Id { get; init; }
+
+        [JsonPropertyName("accountId")]
+        public string AccountId { get; init; }
+        
+        public string UserId { get; set; }
+
+        public long Amount
         {
             get
             {
-                return (TransactionType)Enum.Parse(typeof(TransactionType), CategoryTypeString);
+                return OriginalAmount.UnscaledValue;
             }
         }
 
-        [JsonIgnore]
-        public DateTime Date
+        public int Scale
+        {
+            get
+            {
+                return OriginalAmount.Scale;
+            }
+        }
+
+        public string Currency
+        {
+            get
+            {
+                return OriginalAmount.CurrencyCode;
+            }
+        }
+
+        public DateTime DateTime
         {
             get
             {
@@ -56,30 +80,19 @@ namespace FintechStatsPlatform.DTO
             }
         }
 
-        [JsonIgnore]
-        public long Amount
+        public string Result
         {
             get
             {
-                return OriginalAmount.UnscaledValue;
+                return Pending ? "SUCCESS" : "PENDING";
             }
         }
 
-        [JsonIgnore]
-        public string Currency
+        public TransactionType TransactionType
         {
             get
             {
-                return OriginalAmount.CurrencyCode;
-            }
-        }
-
-        [JsonIgnore]
-        public int Scale
-        {
-            get
-            {
-                return OriginalAmount.Scale;
+                return (TransactionType)Enum.Parse(typeof(TransactionType), CategoryTypeString);
             }
         }
     }
