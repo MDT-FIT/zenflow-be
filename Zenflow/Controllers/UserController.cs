@@ -24,14 +24,14 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            var users = await _userService.GetUsersAsync();
+            var users = await _userService.GetUsersAsync().ConfigureAwait(false);
             return Ok(users);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(string id)
         {
-            var user = await _userService.GetUserByIdAsync(id);
+            var user = await _userService.GetUserByIdAsync(id).ConfigureAwait(false);
             if (user == null) return NotFound();
             return Ok(user);
         }
@@ -39,7 +39,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(string id, User user)
         {
-            var updated = await _userService.UpdateUserAsync(id, user);
+            var updated = await _userService.UpdateUserAsync(id, user).ConfigureAwait(false);
             if (!updated) return BadRequest();
             return NoContent();
         }
@@ -47,14 +47,14 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            var createdUser = await _userService.CreateUserAsync(user);
+            var createdUser = await _userService.CreateUserAsync(user).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, createdUser);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
-            var deleted = await _userService.DeleteUserAsync(id);
+            var deleted = await _userService.DeleteUserAsync(id).ConfigureAwait(false);
             if (!deleted) return NotFound();
             return NoContent();
         }

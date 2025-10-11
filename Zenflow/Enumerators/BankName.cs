@@ -12,7 +12,7 @@ namespace FintechStatsPlatform.Enumirators
         MONO
     }
 
-    public class BankNameMapper
+    public static class BankNameMapper
     {
         private static readonly Dictionary<BankName, string> dictionary = new Dictionary<BankName, string>
         {

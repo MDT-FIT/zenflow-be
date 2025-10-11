@@ -50,16 +50,16 @@ namespace FintechStatsPlatform.Controllers
                     request.Username,
                     request.Email,
                     request.Password
-                );
+                ).ConfigureAwait(false);
 
-                var tokenResponse = await _authService.LogInAsync(request.Email, request.Password);
+                var tokenResponse = await _authService.LogInAsync(request.Email, request.Password).ConfigureAwait(false);
 
                 var handler = new JwtSecurityTokenHandler();
                 var idToken = handler.ReadJwtToken(tokenResponse.IdToken);
 
                 var user = _authService.ConvertToUser(auth0User, idToken.Payload.Sub);
                 _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync().ConfigureAwait(false);
 
                 _logger.LogInformation("User successfully registered: {Email}", request.Email);
 
@@ -103,17 +103,17 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Login attempt for email: {Email}", request.Email);
 
-                var tokenResponse = await _authService.LogInAsync(request.Email, request.Password);
+                var tokenResponse = await _authService.LogInAsync(request.Email, request.Password).ConfigureAwait(false);
 
-                var userInfo = await _authService.GetUserInfoAsync(tokenResponse.AccessToken);
+                var userInfo = await _authService.GetUserInfoAsync(tokenResponse.AccessToken).ConfigureAwait(false);
 
-                var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub);
+                var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub).ConfigureAwait(false);
 
                 if (user == null)
                 {
                     user = _authService.ConvertToUser(userInfo);
                     _context.Users.Add(user);
-                    await _context.SaveChangesAsync();
+                    await _context.SaveChangesAsync().ConfigureAwait(false);
                 }
 
                 _logger.LogInformation("User successfully logged in: {Email}", request.Email);
@@ -162,7 +162,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var tokenResponse = await _authService.RefreshTokenAsync(refreshToken);
+                var tokenResponse = await _authService.RefreshTokenAsync(refreshToken).ConfigureAwait(false);
 
                 return Ok(new
                 {

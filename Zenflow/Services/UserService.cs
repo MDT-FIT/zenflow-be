@@ -9,36 +9,41 @@ namespace FintechStatsPlatform.Services
 
         public UserService(HttpClient httpClient, FintechContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
         public async Task<User> GetUserByEmailAsync(string email)
         {
-            return await _context.Users.FirstOrDefaultAsync(u => email.Equals(u.Email));
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            return user;
         }
         public async Task<List<User>> GetUsersAsync()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Users.ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<User?> GetUserByIdAsync(string id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Users.FindAsync(id).ConfigureAwait(false);
         }
 
-        public async Task<bool> UpdateUserAsync(string id, User user)
+        public async Task UpdateUserAsync(string id, User user)
         {
-            if (id != user.Id) return false;
+            if (user == null) return;
+            if (id != user.Id) return;
 
             _context.Entry(user).State = EntityState.Modified;
             try
             {
-                await _context.SaveChangesAsync();
-                return true;
+                await _context.SaveChangesAsync().ConfigureAwait(false);;
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id)) return false;
+                if (!UserExists(id)) return;
                 throw;
             }
         }
@@ -46,17 +51,17 @@ namespace FintechStatsPlatform.Services
         public async Task<User> CreateUserAsync(User user)
         {
             _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return user;
         }
 
         public async Task<bool> DeleteUserAsync(string id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FindAsync(id).ConfigureAwait(false);
             if (user == null) return false;
 
             _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 

@@ -4,10 +4,11 @@ using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Zenflow.Env;
 
 namespace FintechStatsPlatform
 {
-    public class Program
+    public static class Program
     {
         public static void Main(string[] args)
         {
@@ -16,12 +17,11 @@ namespace FintechStatsPlatform
 
             // Database
             builder.Services.AddDbContextPool<FintechContext>(opt =>
-                opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+                opt.UseNpgsql(EnvConfig.DbConectionString));
 
             // Environment variables
-            var clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID");
-            var clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET");
-            var secret_key = Environment.GetEnvironmentVariable("SECRET_KEY");
+            var clientId = EnvConfig.TinkClientId;
+            var clientSecret = EnvConfig.TinkClientSecret;
 
             // Controllers
             builder.Services.AddControllers();
@@ -51,9 +51,8 @@ namespace FintechStatsPlatform
             builder.Services.AddScoped(provider =>
             {
                 var httpClient = provider.GetRequiredService<HttpClient>();
-                var configuration = provider.GetRequiredService<IConfiguration>();
 
-                return new AuthService(httpClient, configuration);
+                return new AuthService(httpClient);
             });
             builder.Services.AddScoped(provider =>
             {
@@ -64,8 +63,8 @@ namespace FintechStatsPlatform
             });
 
             // JWT Authentication для Auth0
-            var domain = builder.Configuration["Auth0:Domain"];
-            var audience = builder.Configuration["Auth0:Audience"];
+            var domain = EnvConfig.AuthDomain;
+            var audience = EnvConfig.AuthAudience;
 
             if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(audience))
             {

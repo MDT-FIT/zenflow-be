@@ -5,30 +5,20 @@ using FintechStatsPlatform.Exceptions;
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Common;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Threading.Tasks;
 using static FintechStatsPlatform.Exceptions.ExceptionTypes;
-
+using Zenflow.Env;
 
 namespace FintechStatsPlatform.Services
 {
     public class BankService
     {
-        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_API_LINK") ?? "";
-        private readonly string _clientId;
-        private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
         private readonly FintechContext _context;
 
         public BankService(HttpClient httpClient, FintechContext context)
         {
-            _clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID") ?? "";
-            _clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET") ?? "";
-            _httpClient = new HttpClient();
             _httpClient = httpClient;
             _context = context;
         }
@@ -144,11 +134,11 @@ namespace FintechStatsPlatform.Services
             var results = new List<Balance>();
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{BaseApiLink}/api/v1/accounts/{accountId}/balances"
+                $"{EnvConfig.TinkApi}/api/v1/accounts/{accountId}/balances"
             );
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
 
-            var response = await _httpClient.SendAsync(request);
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -158,7 +148,7 @@ namespace FintechStatsPlatform.Services
                 throw new ExternalApiException("Tink", $"Status: {response.StatusCode}");
             }
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             using var doc = JsonDocument.Parse(content);
 
@@ -183,23 +173,15 @@ namespace FintechStatsPlatform.Services
 
         public async Task ConnectOtherBankAsync(string userId, string token)
         {
-            try
-            {
-
-            }
-            catch (ExternalApiException ex)
-            {
-
-            }
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await _httpClient.GetAsync($"{BaseApiLink}/data/v2/accounts");
+            var response = await _httpClient.GetAsync($"{EnvConfig.TinkApi}/data/v2/accounts").ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             if (!response.IsSuccessStatusCode)
                 throw new ExternalApiException("Tink", $"{response.Content.ToString()}");
 
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
 
 
@@ -252,9 +234,10 @@ namespace FintechStatsPlatform.Services
                 });
             }
 
-            await _context.BankAccounts.AddRangeAsync(userAccountsList);
-            await _context.SaveChangesAsync();
+            await _context.BankAccounts.AddRangeAsync(userAccountsList).ConfigureAwait(false);
+            await _context.SaveChangesAsync().ConfigureAwait(false);
         }
+
 
         public string GetTinkAccessToken(string code = "")
         {
@@ -263,13 +246,13 @@ namespace FintechStatsPlatform.Services
             {
                 { "grant_type", "authorization_code" },
                 { "code", code },
-                { "client_id", _clientId },
-                { "client_secret", _clientSecret },
+                { "client_id", EnvConfig.TinkClientId },
+                { "client_secret",  EnvConfig.TinkClientSecret },
             };
 
             var content = new FormUrlEncodedContent(parameters);
 
-            var response = _httpClient.PostAsync($"{BaseApiLink}/api/v1/oauth/token", content).Result;
+            var response = _httpClient.PostAsync($"{EnvConfig.TinkApi}/api/v1/oauth/token", content).Result;
             response.EnsureSuccessStatusCode();
             var json = response.Content.ReadAsStringAsync().Result;
 
@@ -277,57 +260,57 @@ namespace FintechStatsPlatform.Services
             var token = doc.RootElement.GetProperty("access_token").GetString();
             int expiresIn = doc.RootElement.GetProperty("expires_in").GetInt32();
 
-            return token;
+            return token ?? "";
         }
 
         public async Task<List<BankConfig>> GetBanksAsync()
         {
-            return await _context.Banks.ToListAsync();
+            return await _context.Banks.ToListAsync().ConfigureAwait(false);
         }
 
         public async Task<BankConfig> GetBankByIdAsync(string id)
         {
-            return await _context.Banks.FindAsync(id);
+            return await _context.Banks.FindAsync(id).ConfigureAwait(false);
         }
 
         public async Task<BankConfig> AddBankAsync(BankConfig bank)
         {
             _context.Banks.Add(bank);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return bank;
         }
 
-        public async Task<bool> UpdateBankAsync(string id, BankConfig bank)
+        public async Task UpdateBankAsync(string id, BankConfig bank)
         {
-            if (id != bank.Id) return false;
+            if (bank == null) return;
+            if (id != bank.Id) return;
 
             _context.Entry(bank).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
-                return true;
+                await _context.SaveChangesAsync().ConfigureAwait(false);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await BankExistsAsync(id)) return false;
+                if (!await BankExistsAsync(id).ConfigureAwait(false)) return;
                 throw;
             }
         }
 
         public async Task<bool> DeleteBankAsync(string id)
         {
-            var bank = await _context.Banks.FindAsync(id);
+            var bank = await _context.Banks.FindAsync(id).ConfigureAwait(false);
             if (bank == null) return false;
 
             _context.Banks.Remove(bank);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 
         private async Task<bool> BankExistsAsync(string id)
         {
-            return await _context.Banks.AnyAsync(b => b.Id == id);
+            return await _context.Banks.AnyAsync(b => b.Id == id).ConfigureAwait(false);
         }
     }
 }

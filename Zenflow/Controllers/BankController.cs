@@ -16,7 +16,6 @@ namespace FintechStatsPlatform.Controllers
 	{
 		private readonly BankService _banksService = banksService;
         private readonly AnalyticService _analyticService = analyticService;
-        private readonly string _tinkJwtTokenKey = Environment.GetEnvironmentVariable("TINK_JWT_TOKEN") ?? "other_bank_token";
 
         [HttpGet("bank-configs/{userId}")]
 		public IActionResult ListBankConfigs([FromRoute] string userId)
@@ -194,72 +193,72 @@ namespace FintechStatsPlatform.Controllers
 
 
         [HttpPost("connect/other-bank/{code}")]
-		public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string code)
-		{
-			try
-			{
-				var token = _banksService.GetTinkAccessToken(code);
+        public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string code)
+        {
+            try
+            {
+                var token = _banksService.GetTinkAccessToken(code);
 
-				HttpContext.Response.Cookies.Append(_tinkJwtTokenKey,token, CookieConfig.Default);
+				HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt,token, CookieConfig.Default);
 
-				await _banksService.ConnectOtherBankAsync(userId, token);
+                await _banksService.ConnectOtherBankAsync(userId, token).ConfigureAwait(false);
 
-				return Ok(new { message = "Акаунти користувача успішно підключені" });
-			}
-			catch (HttpRequestException ex)
-			{
-				return StatusCode(502, new { error = "Помилка при з'єднанні з банком", details = ex.Message });
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(500, new { error = "Внутрішня помилка сервера", details = ex.Message });
-			}
-		}
+                return Ok(new { message = "Акаунти користувача успішно підключені" });
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, new { error = "Помилка при з'єднанні з банком", details = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Внутрішня помилка сервера", details = ex.Message });
+            }
+        }
 
 
-		// GET: api/Banks
-		[HttpGet]
-		public async Task<ActionResult<IEnumerable<BankConfig>>> GetBanks()
-		{
-			var banks = await _banksService.GetBanksAsync();
-			return Ok(banks);
-		}
+        // GET: api/Banks
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<BankConfig>>> GetBanks()
+        {
+            var banks = await _banksService.GetBanksAsync().ConfigureAwait(false);
+            return Ok(banks);
+        }
 
-		// GET: api/Banks/5
-		[HttpGet("{id}")]
-		public async Task<ActionResult<BankConfig>> GetBank(string id)
-		{
-			var bank = await _banksService.GetBankByIdAsync(id);
-			if (bank == null) return NotFound();
-			return Ok(bank);
-		}
+        // GET: api/Banks/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<BankConfig>> GetBank(string id)
+        {
+            var bank = await _banksService.GetBankByIdAsync(id).ConfigureAwait(false);
+            if (bank == null) return NotFound();
+            return Ok(bank);
+        }
 
-		// PUT: api/Banks/5
-		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPut("{id}")]
-		public async Task<IActionResult> PutBank(string id, BankConfig bank)
-		{
-			var success = await _banksService.UpdateBankAsync(id, bank);
-			if (!success) return NotFound();
-			return NoContent();
-		}
+        // PUT: api/Banks/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutBank(string id, BankConfig bank)
+        {
+            var success = await _banksService.UpdateBankAsync(id, bank).ConfigureAwait(false);
+            if (!success) return NotFound();
+            return NoContent();
+        }
 
-		// POST: api/Banks
-		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-		[HttpPost]
-		public async Task<ActionResult<BankConfig>> PostBank(BankConfig bank)
-		{
-			var createdBank = await _banksService.AddBankAsync(bank);
-			return CreatedAtAction(nameof(GetBank), new { id = createdBank.Id }, createdBank);
-		}
+        // POST: api/Banks
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<BankConfig>> PostBank(BankConfig bank)
+        {
+            var createdBank = await _banksService.AddBankAsync(bank).ConfigureAwait(false);
+            return CreatedAtAction(nameof(GetBank), new { id = createdBank.Id }, createdBank);
+        }
 
-		// DELETE: api/Banks/5
-		[HttpDelete("{id}")]
-		public async Task<IActionResult> DeleteBank(string id)
-		{
-			var success = await _banksService.DeleteBankAsync(id);
-			if (!success) return NotFound();
-			return NoContent();
-		}
-	}
+        // DELETE: api/Banks/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBank(string id)
+        {
+            var success = await _banksService.DeleteBankAsync(id).ConfigureAwait(false);
+            if (!success) return NotFound();
+            return NoContent();
+        }
+    }
 }

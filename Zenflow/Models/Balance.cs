@@ -4,7 +4,7 @@
     {
         public string AccountId { get; set; }
 
-        public string UserId { get; set; }
+        public string? UserId { get; set; }
 
         public long Amount { get; set; }
 

@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Zenflow\FintechStatsPlatform.csproj" />
+    <ProjectReference Include="..\Zenflow\Zenflow.csproj" />
   </ItemGroup>
 
   <ItemGroup>
