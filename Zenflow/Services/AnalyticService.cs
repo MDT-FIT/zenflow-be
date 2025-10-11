@@ -57,7 +57,7 @@ namespace FintechStatsPlatform.Services
                 currency = lastMonthExpenses[0].Currency;
             }
 
-            double changePercentage = CalculateChangePercentage(currentAmount, lastMonthAmount);
+            double changePercentage = Math.Round(CalculateChangePercentage(currentAmount, lastMonthAmount), 2);
 
             return new Stats(filter.UserId, [.. filter.AccountIds], currentAmount, scale, currency, changePercentage);
         }
