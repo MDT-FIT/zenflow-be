@@ -1,13 +1,18 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace FintechStatsPlatform.Enumirators
 {
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CardType
     {
-        [Description("DEBIT")]
-        DEBIT,
+        [Description("CHECKING")]
+        CHECKING,
 
-        [Description("CREDIT")]
-        CREDIT
+        [Description("SAVINGS")]
+        SAVINGS,
+
+        [Description("CREDIT_CARD")]
+        CREDIT_CARD,
     }
 }
