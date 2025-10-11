@@ -3,24 +3,33 @@ using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Mapster;
 using Microsoft.IdentityModel.Protocols.Configuration;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace FintechStatsPlatform.Services
 {
     public class AnalyticService
     {
+        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_API_LINK") ?? "";
         private readonly BankService _bankService;
         private readonly FintechContext _context;
+        private readonly HttpClient _httpClient;
 
-        public AnalyticService(BankService bankService, FintechContext context)
+        public AnalyticService(BankService bankService, FintechContext context, HttpClient httpClient)
         {
             _bankService = bankService;
             _context = context;
+            _httpClient = httpClient;
         }
 
         public async Task<Stats> getExpensesAsync(StatsFilter filter, string userAccessToken)
         {
             return await GetTypedTransactions(filter, userAccessToken);
         }
+
         public async Task<Stats> getIncome(StatsFilter filter, string userAccessToken)
         {
             return await GetTypedTransactions(filter, userAccessToken, false);
@@ -89,9 +98,35 @@ namespace FintechStatsPlatform.Services
             return (double)(current - prev) / prev * 100;
         }
 
-        public Card getMostUsedCard(StatsFilter filter)
+        public async Task<TinkCardResponse> getMostUsedCard(StatsFilter filter, string userAccessToken)
         {
-            return new Card();
+            var tFilter = filter.ToTransactionFilter();
+
+            var transactions = await _bankService.ListTransactionsAsync(tFilter, userAccessToken);
+            var mostUsedAccountId = transactions?.GroupBy(t => t.AccountId)?.MaxBy(g => g.Count())?.Key;
+
+            var requestMessage = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri($"{BaseApiLink}/data/v2/accounts/{mostUsedAccountId}"),
+            };
+
+            // Add header with user's access token
+            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+
+            var response = await _httpClient.SendAsync(requestMessage);
+
+            // Throw exception in case request failed
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            var mostUsedCard = JsonSerializer.Deserialize<TinkCardResponse>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return mostUsedCard ?? new TinkCardResponse();
         }
     }
 }
