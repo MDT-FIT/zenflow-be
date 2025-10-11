@@ -64,7 +64,7 @@ namespace FintechStatsPlatform.Controllers
             }
         }
 
-        [HttpPost("/stats/expenses")]
+        [HttpPost("stats/expenses")]
         public async Task<ActionResult> GetExpensesStats([FromBody] StatsFilter filter)
         {
             if (filter == null || filter.UserId is null) return BadRequest();
@@ -79,6 +79,41 @@ namespace FintechStatsPlatform.Controllers
             try
             {
                 var stats = await _analyticService.getExpensesAsync(filter, token);
+                return Ok(stats);
+            }
+            catch (ExceptionTypes.JsonParsingException jsonEx)
+            {
+                return StatusCode(500, jsonEx.Message);
+            }
+            catch (ExceptionTypes.ExternalApiException apiEx)
+            {
+                return StatusCode(500, apiEx.Message);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("stats/income")]
+        public async Task<ActionResult> GetIncomeStats([FromBody] StatsFilter filter)
+        {
+            if (filter == null || filter.UserId is null) return BadRequest();
+
+            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is invalid or expired");
+            }
+
+            try
+            {
+                var stats = await _analyticService.getIncome(filter, token);
                 return Ok(stats);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
