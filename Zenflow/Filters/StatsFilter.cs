@@ -11,5 +11,17 @@ namespace FintechStatsPlatform.Filters
         private DateTime dateTo;
         public DateTime DateTo { get { return dateTo; } set { dateTo = value; } }
 
+        public TransactionFilter ToTransactionFilter()
+        {
+            return new TransactionFilter()
+            {
+                Id = Id,
+                UserId = UserId,
+                AccountIds = AccountIds,
+                DateFrom = DateFrom,
+                DateTo = DateTo,
+            };
+            }
+        }
     }
 }
