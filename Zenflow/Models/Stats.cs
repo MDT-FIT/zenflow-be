@@ -12,7 +12,7 @@
         }
         public string UserId { get; set; }
 
-        private List<string> AccountIds { get; set; }
+        public List<string> AccountIds { get; set; }
 
         public long Amount { get; set; }
 
