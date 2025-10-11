@@ -19,6 +19,15 @@ namespace FintechStatsPlatform.Services
 
         public async Task<Stats> getExpensesAsync(StatsFilter filter, string userAccessToken)
         {
+            return await GetTypedTransactions(filter, userAccessToken);
+        }
+        public async Task<Stats> getIncome(StatsFilter filter, string userAccessToken)
+        {
+            return await GetTypedTransactions(filter, userAccessToken, false);
+        }
+
+        private async Task<Stats> GetTypedTransactions(StatsFilter filter, string userAccessToken, bool isExpenses=true)
+        {
             // Prepare filters for different periods of time
             var tFilter1 = filter.ToTransactionFilter();
             var tFilter2 = filter.ToTransactionFilter();
@@ -36,8 +45,8 @@ namespace FintechStatsPlatform.Services
             await Task.WhenAll(currentExpensesRetrieval, lastMonthExpensesRetrieval); // Wait for both operations to complete
 
             // Get the resulting transactions
-            var currentExpenses = currentExpensesRetrieval.Result.Where(t => t.Amount < 0).ToArray();
-            var lastMonthExpenses = lastMonthExpensesRetrieval.Result.Where(t => t.Amount < 0).ToArray();
+            var currentExpenses = currentExpensesRetrieval.Result.Where(t => isExpenses ? t.Amount < 0 : t.Amount > 0).ToArray();
+            var lastMonthExpenses = lastMonthExpensesRetrieval.Result.Where(t => isExpenses ? t.Amount < 0 : t.Amount > 0).ToArray();
 
             long currentAmount = Math.Abs(currentExpenses.Sum(t => t.Amount));
             long lastMonthAmount = Math.Abs(lastMonthExpenses.Sum(t => t.Amount));
@@ -78,11 +87,6 @@ namespace FintechStatsPlatform.Services
             }
 
             return (double)(current - prev) / prev * 100;
-        }
-
-        public Stats getIncome(StatsFilter filter)
-        {
-            return new Stats("test");
         }
 
         public Card getMostUsedCard(StatsFilter filter)
