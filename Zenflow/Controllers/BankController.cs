@@ -1,6 +1,8 @@
-﻿using FintechStatsPlatform.Models;
+﻿using FintechStatsPlatform.Filters;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using FintechStatsPlatform.Exceptions;
 
 
@@ -32,8 +34,38 @@ namespace FintechStatsPlatform.Controllers
             }
 			
 		}
+
+
+        [HttpPost("transactions")]
+        public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
+        {
+            if (filter is null || filter.UserId is null) return BadRequest();
+
+            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is invalid or expired");
+            }
+
+            try
+            {
+                var transactions = await _banksService.ListTransactionsAsync(filter, token);
+                return Ok(transactions);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode(502, ex.Message);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+        
         [HttpGet("balances")]
         public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
+
         {
             if (accountIds.Equals(null) || !accountIds.Any())
                 return BadRequest(new { message = "At least one accountId is required." });
