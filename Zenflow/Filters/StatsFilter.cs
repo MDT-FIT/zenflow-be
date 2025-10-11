@@ -21,7 +21,6 @@ namespace FintechStatsPlatform.Filters
                 DateFrom = DateFrom,
                 DateTo = DateTo,
             };
-            }
         }
     }
 }

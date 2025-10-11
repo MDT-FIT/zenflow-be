@@ -8,11 +8,13 @@ namespace FintechStatsPlatform.Services
 {
     public class AnalyticService
     {
-        private BankService _bankService;
+        private readonly BankService _bankService;
+        private readonly FintechContext _context;
 
-        public AnalyticService(BankService bankService)
+        public AnalyticService(BankService bankService, FintechContext context)
         {
             _bankService = bankService;
+            _context = context;
         }
 
         public async Task<Stats> getExpensesAsync(StatsFilter filter, string userAccessToken)
