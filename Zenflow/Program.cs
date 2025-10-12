@@ -17,7 +17,8 @@ namespace FintechStatsPlatform
 
             // Database
             builder.Services.AddDbContextPool<FintechContext>(opt =>
-                opt.UseNpgsql(EnvConfig.DbConectionString));
+                opt.UseNpgsql(EnvConfig.DbConectionString)
+            );
 
             // Environment variables
             var clientId = EnvConfig.TinkClientId;
@@ -68,43 +69,47 @@ namespace FintechStatsPlatform
 
             if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(audience))
             {
-                builder.Services.AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer(options =>
-                {
-                    options.Authority = $"https://{domain}/";
-                    options.Audience = audience;
-                    options.TokenValidationParameters = new TokenValidationParameters
+                builder
+                    .Services.AddAuthentication(options =>
                     {
-                        ValidateIssuer = true,
-                        ValidIssuer = $"https://{domain}/",
-                        ValidateAudience = true,
-                        ValidAudience = audience,
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.Zero
-                    };
-                });
+                        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
+                    .AddJwtBearer(options =>
+                    {
+                        options.Authority = $"https://{domain}/";
+                        options.Audience = audience;
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidIssuer = $"https://{domain}/",
+                            ValidateAudience = true,
+                            ValidAudience = audience,
+                            ValidateLifetime = true,
+                            ClockSkew = TimeSpan.Zero,
+                        };
+                    });
 
                 // Authorization policies
                 builder.Services.AddAuthorization(options =>
                 {
-                    options.AddPolicy("RequireVerifiedEmail", policy =>
-                        policy.RequireClaim("email_verified", "true"));
+                    options.AddPolicy(
+                        "RequireVerifiedEmail",
+                        policy => policy.RequireClaim("email_verified", "true")
+                    );
                 });
             }
 
             // CORS
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
+                options.AddPolicy(
+                    "AllowAll",
+                    policy =>
+                    {
+                        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                    }
+                );
             });
 
             var app = builder.Build();
@@ -119,6 +124,18 @@ namespace FintechStatsPlatform
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAll");
+
+            app.Use(
+                async (context, next) =>
+                {
+                    if (context.Request.Cookies.TryGetValue(EnvConfig.AuthJwt, out var authToken))
+                    {
+                        context.Request.Headers["Authorization"] = $"Bearer {authToken}";
+                    }
+
+                    await next();
+                }
+            );
 
             app.UseAuthentication();
             app.UseAuthorization();

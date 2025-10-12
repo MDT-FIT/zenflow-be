@@ -7,14 +7,9 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
     {
         public void Configure(EntityTypeBuilder<BankAccount> builder)
         {
-            builder
-                .ToTable("bank_accounts")
-                .HasKey(a => a.Id);
+            builder.ToTable("bank_accounts").HasKey(a => a.Id);
 
-            builder
-                .Property(a => a.Id)
-                .HasColumnName("id")
-                .HasColumnType("varchar(100)");
+            builder.Property(a => a.Id).HasColumnName("id").HasColumnType("varchar(100)");
 
             builder
                 .HasOne(a => a.User)
@@ -22,13 +17,9 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder
-                .Property(a => a.UserId)
-                .HasColumnName("user_id");
+            builder.Property(a => a.UserId).HasColumnName("user_id");
 
-            builder
-                .Property(a => a.BankId)
-                .HasColumnName("bank_id");
+            builder.Property(a => a.BankId).HasColumnName("bank_id");
 
             builder
                 .Property(a => a.CurrencyScale)
@@ -56,10 +47,8 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .ValueGeneratedOnAdd();
 
-            builder
-                .Ignore(b => b.Mapper);
-            builder
-                .Ignore(b => b.Bank);
+            builder.Ignore(b => b.Mapper);
+            builder.Ignore(b => b.Bank);
         }
     }
 }

@@ -9,6 +9,5 @@ namespace FintechStatsPlatform.Models
         public long Balance { get; set; }
         public string? CardBin { get; set; }
         public string? LastFour { get; set; }
-
     }
 }

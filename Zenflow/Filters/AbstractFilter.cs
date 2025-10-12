@@ -6,8 +6,7 @@ namespace FintechStatsPlatform.Filters
     {
         public required string Id { get; set; }
 
-        public List<string> AccountIds { get; } = new List<string>();
+        public List<string> AccountIds { get; set; } = new List<string>();
         public required string UserId { get; set; }
-
     }
 }

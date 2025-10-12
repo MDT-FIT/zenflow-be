@@ -1,21 +1,22 @@
-﻿using FintechStatsPlatform.Filters;
+﻿using FintechStatsPlatform.Exceptions;
+using FintechStatsPlatform.Filters;
+using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using FintechStatsPlatform.Exceptions;
-using Zenflow.Env;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using FintechStatsPlatform.Helpers;
-
+using Zenflow.Env;
 
 namespace FintechStatsPlatform.Controllers
 {
-	[Route("api/[controller]")]
-	[ApiController]
-	public class BankController(BankService banksService, AnalyticService analyticService) : ControllerBase
-	{
-		private readonly BankService _banksService = banksService;
+    [Authorize]
+    [Route("api/[controller]")]
+    [ApiController]
+    public class BankController(BankService banksService, AnalyticService analyticService)
+        : ControllerBase
+    {
+        private readonly BankService _banksService = banksService;
         private readonly AnalyticService _analyticService = analyticService;
 
         [HttpGet("bank-configs/{userId}")]
@@ -32,16 +33,18 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex.ToString()}");
+                Console.WriteLine(
+                    $"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex.ToString()}"
+                );
                 return BadRequest("Something went wrong");
             }
-
         }
 
         [HttpPost("transactions")]
         public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
         {
-            if (filter == null || filter.UserId is null) return BadRequest();
+            if (filter == null || filter.UserId is null)
+                return BadRequest();
 
             string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
 
@@ -52,7 +55,9 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var transactions = await _banksService.ListTransactionsAsync(filter, token).ConfigureAwait(false);
+                var transactions = await _banksService
+                    .ListTransactionsAsync(filter, token)
+                    .ConfigureAwait(false);
                 return Ok(transactions);
             }
             catch (HttpRequestException ex)
@@ -68,20 +73,27 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost("stats/expenses")]
         public async Task<ActionResult> GetExpensesStats([FromBody] StatsFilter filter)
         {
-            return await StatsEndPointBase(_analyticService.GetExpensesAsync, filter, "expenses");
+            return await StatsEndPointBase(_analyticService.GetExpensesAsync, filter, "expenses")
+                .ConfigureAwait(false);
         }
 
         [HttpPost("stats/income")]
         public async Task<ActionResult> GetIncomeStats([FromBody] StatsFilter filter)
         {
-            return await StatsEndPointBase(_analyticService.GetIncomeAsync, filter, "income");
+            return await StatsEndPointBase(_analyticService.GetIncomeAsync, filter, "income")
+                .ConfigureAwait(false);
         }
 
-        private async Task<ActionResult> StatsEndPointBase(Func<StatsFilter, string, Task<Stats>> getOperation, StatsFilter filter, string typeName)
+        private async Task<ActionResult> StatsEndPointBase(
+            Func<StatsFilter, string, Task<Stats>> getOperation,
+            StatsFilter filter,
+            string typeName
+        )
         {
-            if (filter == null || filter.UserId is null) return BadRequest();
+            if (filter == null || filter.UserId is null)
+                return BadRequest();
 
-            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+            string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
 
             if (string.IsNullOrEmpty(token))
             {
@@ -90,7 +102,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var stats = await getOperation(filter, token);
+                var stats = await getOperation(filter, token).ConfigureAwait(false);
                 return Ok(stats);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
@@ -103,7 +115,10 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (HttpRequestException httpEx)
             {
-                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+                return StatusCode(
+                    502,
+                    new { message = $"Tink API request failed: {httpEx.Message}" }
+                );
             }
             catch (Exception ex)
             {
@@ -114,9 +129,10 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost("stats/top-card")]
         public async Task<ActionResult> GetTopCard([FromBody] StatsFilter filter)
         {
-            if (filter == null || filter.UserId is null) return BadRequest();
+            if (filter == null || filter.UserId is null)
+                return BadRequest();
 
-            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+            string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
 
             if (string.IsNullOrEmpty(token))
             {
@@ -125,7 +141,9 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var card = await _analyticService.GetMostUsedCardAsync(filter, token);
+                var card = await _analyticService
+                    .GetMostUsedCardAsync(filter, token)
+                    .ConfigureAwait(false);
                 return Ok(card);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
@@ -138,17 +156,22 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (HttpRequestException httpEx)
             {
-                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+                return StatusCode(
+                    502,
+                    new { message = $"Tink API request failed: {httpEx.Message}" }
+                );
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
             }
         }
-        
-        [HttpGet("balances")]
-        public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
 
+        [HttpGet("balances")]
+        public async Task<IActionResult> GetBalances(
+            [FromQuery] List<string> accountIds,
+            [FromQuery] string userId
+        )
         {
             if (accountIds.Equals(null) || accountIds.Count == 0)
                 return BadRequest(new { message = "At least one accountId is required." });
@@ -170,7 +193,9 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var balances = await _banksService.GetBalancesAsync(accountIds, token, userId).ConfigureAwait(false);
+                var balances = await _banksService
+                    .GetBalancesAsync(accountIds, token, userId)
+                    .ConfigureAwait(false);
                 return Ok(balances);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
@@ -183,15 +208,16 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (HttpRequestException httpEx)
             {
-                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+                return StatusCode(
+                    502,
+                    new { message = $"Tink API request failed: {httpEx.Message}" }
+                );
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Failed to get balances: {ex.Message}" });
             }
         }
-
-
 
         [HttpPost("connect/other-bank/{code}")]
         public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string code)
@@ -200,7 +226,7 @@ namespace FintechStatsPlatform.Controllers
             {
                 var token = _banksService.GetTinkAccessToken(code);
 
-				HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt,token, CookieConfig.Default);
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, token, CookieConfig.Default);
 
                 await _banksService.ConnectOtherBankAsync(userId, token).ConfigureAwait(false);
 
@@ -208,14 +234,19 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode(502, new { error = "Помилка при з'єднанні з банком", details = ex.Message });
+                return StatusCode(
+                    502,
+                    new { error = "Помилка при з'єднанні з банком", details = ex.Message }
+                );
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Внутрішня помилка сервера", details = ex.Message });
+                return StatusCode(
+                    500,
+                    new { error = "Внутрішня помилка сервера", details = ex.Message }
+                );
             }
         }
-
 
         // GET: api/Banks
         [HttpGet]
@@ -230,7 +261,8 @@ namespace FintechStatsPlatform.Controllers
         public async Task<ActionResult<BankConfig>> GetBank(string id)
         {
             var bank = await _banksService.GetBankByIdAsync(id).ConfigureAwait(false);
-            if (bank == null) return NotFound();
+            if (bank == null)
+                return NotFound();
             return Ok(bank);
         }
 
@@ -257,7 +289,8 @@ namespace FintechStatsPlatform.Controllers
         public async Task<IActionResult> DeleteBank(string id)
         {
             var success = await _banksService.DeleteBankAsync(id).ConfigureAwait(false);
-            if (!success) return NotFound();
+            if (!success)
+                return NotFound();
             return NoContent();
         }
     }

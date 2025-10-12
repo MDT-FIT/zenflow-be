@@ -1,5 +1,5 @@
-﻿using FintechStatsPlatform.Enumirators;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using FintechStatsPlatform.Enumirators;
 
 namespace FintechStatsPlatform.DTO
 {
@@ -33,10 +33,7 @@ namespace FintechStatsPlatform.DTO
 
         public CardType CardType
         {
-            get
-            {
-                return (CardType)Enum.Parse(typeof(CardType), TypeString);
-            }
+            get { return (CardType)Enum.Parse(typeof(CardType), TypeString); }
         }
     }
 

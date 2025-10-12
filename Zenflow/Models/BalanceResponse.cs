@@ -4,7 +4,7 @@
     {
         public string? CurrencyCode { get; set; }
         public int Scale { get; set; }
-        public decimal UnscaledValue { get; set; }  // Для зручності конвертувати в decimal
+        public decimal UnscaledValue { get; set; } // Для зручності конвертувати в decimal
     }
 
     public class BalancesDetails
@@ -20,5 +20,4 @@
         public BalancesDetails? Balances { get; set; }
         public long Refreshed { get; set; } // timestamp
     }
-
 }

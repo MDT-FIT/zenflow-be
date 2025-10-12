@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FintechStatsPlatform.Enumirators
 {
@@ -9,24 +9,32 @@ namespace FintechStatsPlatform.Enumirators
         OTHER,
 
         [Description("MONO")]
-        MONO
+        MONO,
     }
 
     public static class BankNameMapper
     {
-        private static readonly Dictionary<BankName, string> dictionary = new Dictionary<BankName, string>
+        private static readonly Dictionary<BankName, string> dictionary = new Dictionary<
+            BankName,
+            string
+        >
         {
             { BankName.OTHER, "other" },
-            { BankName.MONO, "mono" }
+            { BankName.MONO, "mono" },
         };
 
         public static readonly ValueConverter Map = new ValueConverter<BankName, string>(
-                v => dictionary[v],
-                v => dictionary.FirstOrDefault(kvp => kvp.Value == v).Key
-            );
+            v => dictionary[v],
+            v => dictionary.FirstOrDefault(kvp => kvp.Value == v).Key
+        );
 
-        static public readonly Dictionary<BankName, string> BankNameToIdMap = new Dictionary<BankName, string> {
-            { BankName.OTHER, "tink-" },{ BankName.MONO,"mono-"}
+        public static readonly Dictionary<BankName, string> BankNameToIdMap = new Dictionary<
+            BankName,
+            string
+        >
+        {
+            { BankName.OTHER, "tink-" },
+            { BankName.MONO, "mono-" },
         };
     }
 }

@@ -15,13 +15,18 @@ namespace FintechStatsPlatform.Services
 
         public async Task<User> GetUserByEmailAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
+            var user = await _context
+                .Users.FirstOrDefaultAsync(u =>
+                    u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)
+                )
+                .ConfigureAwait(false);
 
             if (user == null)
                 throw new UserNotFoundException("user", email);
 
             return user;
         }
+
         public async Task<List<User>> GetUsersAsync()
         {
             return await _context.Users.ToListAsync().ConfigureAwait(false);
@@ -34,17 +39,21 @@ namespace FintechStatsPlatform.Services
 
         public async Task UpdateUserAsync(string id, User user)
         {
-            if (user == null) return;
-            if (id != user.Id) return;
+            if (user == null)
+                return;
+            if (id != user.Id)
+                return;
 
             _context.Entry(user).State = EntityState.Modified;
             try
             {
-                await _context.SaveChangesAsync().ConfigureAwait(false); ;
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+                ;
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id)) return;
+                if (!UserExists(id))
+                    return;
                 throw;
             }
         }
@@ -59,7 +68,8 @@ namespace FintechStatsPlatform.Services
         public async Task<bool> DeleteUserAsync(string id)
         {
             var user = await _context.Users.FindAsync(id).ConfigureAwait(false);
-            if (user == null) return false;
+            if (user == null)
+                return false;
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync().ConfigureAwait(false);

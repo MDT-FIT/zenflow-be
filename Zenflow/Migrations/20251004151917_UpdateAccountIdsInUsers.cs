@@ -13,7 +13,8 @@ namespace FintechStatsPlatform.Migrations
             migrationBuilder.RenameColumn(
                 name: "account_id",
                 table: "users",
-                newName: "account_ids");
+                newName: "account_ids"
+            );
         }
 
         /// <inheritdoc />
@@ -22,7 +23,8 @@ namespace FintechStatsPlatform.Migrations
             migrationBuilder.RenameColumn(
                 name: "account_ids",
                 table: "users",
-                newName: "account_id");
+                newName: "account_id"
+            );
         }
     }
 }

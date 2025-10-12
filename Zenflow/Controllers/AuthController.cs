@@ -1,12 +1,12 @@
-﻿using FintechStatsPlatform.DTO;
+﻿using System.IdentityModel.Tokens.Jwt;
+using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
-
-
+using Zenflow.Env;
 
 namespace FintechStatsPlatform.Controllers
 {
@@ -14,11 +14,16 @@ namespace FintechStatsPlatform.Controllers
     [Route("api/zenflow/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly string _jwtTokenKey = Environment.GetEnvironmentVariable("AUTH_JWT_TOKEN") ?? "jwt_token";
         private readonly AuthService _authService;
         private readonly ILogger<AuthController> _logger;
         private readonly FintechContext _context;
-        public AuthController(AuthService authService, ILogger<AuthController> logger, UserService usersService, FintechContext context)
+
+        public AuthController(
+            AuthService authService,
+            ILogger<AuthController> logger,
+            UserService usersService,
+            FintechContext context
+        )
         {
             _authService = authService;
             _logger = logger;
@@ -46,13 +51,13 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Sign up attempt for email: {Email}", request.Email);
 
-                var auth0User = await _authService.SignUpAsync(
-                    request.Username,
-                    request.Email,
-                    request.Password
-                ).ConfigureAwait(false);
+                var auth0User = await _authService
+                    .SignUpAsync(request.Username, request.Email, request.Password)
+                    .ConfigureAwait(false);
 
-                var tokenResponse = await _authService.LogInAsync(request.Email, request.Password).ConfigureAwait(false);
+                var tokenResponse = await _authService
+                    .LogInAsync(request.Email, request.Password)
+                    .ConfigureAwait(false);
 
                 var handler = new JwtSecurityTokenHandler();
                 var idToken = handler.ReadJwtToken(tokenResponse.IdToken);
@@ -63,27 +68,28 @@ namespace FintechStatsPlatform.Controllers
 
                 _logger.LogInformation("User successfully registered: {Email}", request.Email);
 
+                HttpContext.Response.Cookies.Append(
+                    EnvConfig.AuthJwt,
+                    tokenResponse.AccessToken ?? "",
+                    CookieConfig.Default
+                );
 
-                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, CookieConfig.Default);
-
-                return Ok(new
-                {
-                    user,
-                    access_token = tokenResponse.AccessToken,
-                    id_token = tokenResponse.IdToken,
-                    refresh_token = tokenResponse.RefreshToken,
-                    expires_in = tokenResponse.ExpiresIn
-                });
+                return Ok(
+                    new
+                    {
+                        user,
+                        access_token = tokenResponse.AccessToken,
+                        id_token = tokenResponse.IdToken,
+                        refresh_token = tokenResponse.RefreshToken,
+                        expires_in = tokenResponse.ExpiresIn,
+                    }
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Sign up failed for email: {Email}", request.Email);
                 Console.WriteLine(ex.Message);
-                return BadRequest(new
-                {
-                    error = "Помилка реєстрації",
-                    message = ex.Message
-                });
+                return BadRequest(new { error = "Помилка реєстрації", message = ex.Message });
             }
         }
 
@@ -103,11 +109,17 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Login attempt for email: {Email}", request.Email);
 
-                var tokenResponse = await _authService.LogInAsync(request.Email, request.Password).ConfigureAwait(false);
+                var tokenResponse = await _authService
+                    .LogInAsync(request.Email, request.Password)
+                    .ConfigureAwait(false);
 
-                var userInfo = await _authService.GetUserInfoAsync(tokenResponse.AccessToken).ConfigureAwait(false);
+                var userInfo = await _authService
+                    .GetUserInfoAsync(tokenResponse.AccessToken ?? "")
+                    .ConfigureAwait(false);
 
-                var user = await _context.Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub).ConfigureAwait(false);
+                var user = await _context
+                    .Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub)
+                    .ConfigureAwait(false);
 
                 if (user == null)
                 {
@@ -118,33 +130,36 @@ namespace FintechStatsPlatform.Controllers
 
                 _logger.LogInformation("User successfully logged in: {Email}", request.Email);
 
+                HttpContext.Response.Cookies.Append(
+                    EnvConfig.AuthJwt,
+                    tokenResponse.AccessToken ?? "",
+                    CookieConfig.Default
+                );
 
-                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, CookieConfig.Default);
-
-                return Ok(new
-                {
-                    access_token = tokenResponse.AccessToken,
-                    id_token = tokenResponse.IdToken,
-                    refresh_token = tokenResponse.RefreshToken,
-                    expires_in = tokenResponse.ExpiresIn,
-                    user = new
+                return Ok(
+                    new
                     {
-                        id = userInfo.Sub,
-                        email = userInfo.Email,
-                        username = userInfo.Nickname ?? userInfo.Name,
-                        email_verified = userInfo.EmailVerified
+                        access_token = tokenResponse.AccessToken,
+                        id_token = tokenResponse.IdToken,
+                        refresh_token = tokenResponse.RefreshToken,
+                        expires_in = tokenResponse.ExpiresIn,
+                        user = new
+                        {
+                            id = userInfo.Sub,
+                            email = userInfo.Email,
+                            username = userInfo.Nickname ?? userInfo.Name,
+                            email_verified = userInfo.EmailVerified,
+                        },
                     }
-                });
+                );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Login failed for email: {Email}", request.Email);
                 Console.WriteLine(ex.Message);
-                return Unauthorized(new
-                {
-                    error = "Невірний email або пароль",
-                    message = ex.Message
-                });
+                return Unauthorized(
+                    new { error = "Невірний email або пароль", message = ex.Message }
+                );
             }
         }
 
@@ -152,6 +167,7 @@ namespace FintechStatsPlatform.Controllers
         /// Оновлення access token через refresh token
         /// POST /api/zenflow/auth/refresh
         /// </summary>
+        [Authorize]
         [HttpPost("refresh")]
         public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
         {
@@ -162,13 +178,17 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var tokenResponse = await _authService.RefreshTokenAsync(refreshToken).ConfigureAwait(false);
+                var tokenResponse = await _authService
+                    .RefreshTokenAsync(refreshToken)
+                    .ConfigureAwait(false);
 
-                return Ok(new
-                {
-                    access_token = tokenResponse.AccessToken,
-                    expires_in = tokenResponse.ExpiresIn
-                });
+                return Ok(
+                    new
+                    {
+                        access_token = tokenResponse.AccessToken,
+                        expires_in = tokenResponse.ExpiresIn,
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -182,12 +202,11 @@ namespace FintechStatsPlatform.Controllers
         /// Вихід з системи
         /// POST /api/zenflow/auth/log-out
         /// </summary>
+        [Authorize]
         [HttpPost("log-out")]
         public IActionResult LogOut([FromBody] string accessToken)
         {
-            HttpContext.Response.Cookies.Delete(_jwtTokenKey);
-
-            _authService.LogOut();
+            HttpContext.Response.Cookies.Delete(EnvConfig.AuthJwt);
 
             return Ok(new { message = "Вихід успішний" });
         }

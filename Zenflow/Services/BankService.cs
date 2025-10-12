@@ -1,11 +1,10 @@
-
+using System.Net.Http.Headers;
+using System.Text.Json;
 using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Enumirators;
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using Zenflow.Env;
 using static FintechStatsPlatform.Exceptions.ExceptionTypes;
 
@@ -17,7 +16,7 @@ namespace FintechStatsPlatform.Services
         private readonly FintechContext _context;
         private readonly JsonSerializerOptions serializationOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
         };
 
         public BankService(HttpClient httpClient, FintechContext context)
@@ -27,17 +26,34 @@ namespace FintechStatsPlatform.Services
         }
 
         public async Task<List<TinkTransaction>> ListTransactionsAsync(
-            TransactionFilter filter, string userAccessToken, int? minAmount = null, int? maxAmount = null)
+            TransactionFilter filter,
+            string userAccessToken,
+            int? minAmount = null,
+            int? maxAmount = null
+        )
         {
             if (filter == null)
                 throw new ParameterNotFound("filter", "filter", "");
 
             if (filter.AccountIds.Count == 0)
-                filter.AccountIds.AddRange(GetUserAccounts(filter.UserId).Select(a => a.Id!).ToList());
+                filter.AccountIds.AddRange(
+                    GetUserAccounts(filter.UserId).Select(a => a.Id!).ToList()
+                );
 
-            var tinkAccountIds = filter.AccountIds
-                .Where(a => a.StartsWith(BankNameMapper.BankNameToIdMap[BankName.OTHER], StringComparison.OrdinalIgnoreCase))
-                .Select(a => a.Replace(BankNameMapper.BankNameToIdMap[BankName.OTHER], "", StringComparison.OrdinalIgnoreCase))
+            var tinkAccountIds = filter
+                .AccountIds.Where(a =>
+                    a.StartsWith(
+                        BankNameMapper.BankNameToIdMap[BankName.OTHER],
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                .Select(a =>
+                    a.Replace(
+                        BankNameMapper.BankNameToIdMap[BankName.OTHER],
+                        "",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 .ToArray();
 
             var tinkTransactions = new List<TinkTransaction>();
@@ -50,21 +66,30 @@ namespace FintechStatsPlatform.Services
                     startDate = filter.DateFrom,
                     endDate = filter.DateTo,
                     minAmount,
-                    maxAmount
+                    maxAmount,
                 };
 
-                var request = new HttpRequestMessage(HttpMethod.Post, EnvConfig.TinkListTransactionUri)
+                var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    EnvConfig.TinkListTransactionUri
+                )
                 {
-                    Content = JsonContent.Create(parameters)
+                    Content = JsonContent.Create(parameters),
                 };
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue(
+                    "Bearer",
+                    userAccessToken
+                );
 
                 var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
                 var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, serializationOptions);
+                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(
+                    content,
+                    serializationOptions
+                );
 
                 tinkTransactions = apiResponse?.Results.Select(r => r.Transaction).ToList() ?? [];
             }
@@ -130,21 +155,28 @@ namespace FintechStatsPlatform.Services
 
         public List<BankConfig> ListBankConfigs(string userId)
         {
+            var user =
+                _context.Users.FirstOrDefault(u => u.Id == userId)
+                ?? throw new UserNotFoundException("id", userId);
 
-            var user = _context.Users.FirstOrDefault(u => u.Id == userId) ?? throw new UserNotFoundException("id", userId); ;
+            var allConfigs = _context.Banks.ToList();
 
-            return _context.Banks
-                .Where(config => !user.IsBankConnected(config.Name))
-                .ToList();
+            return allConfigs.Where(config => !user.IsBankConnected(config.Name)).ToList();
         }
-        public async Task<List<Balance>> GetBalancesAsync(List<string> accountIds, string token, string userId)
+
+        public async Task<List<Balance>> GetBalancesAsync(
+            List<string> accountIds,
+            string token,
+            string userId
+        )
         {
             var results = new List<Balance>();
 
             foreach (var accountId in accountIds)
                 try
                 {
-                    var balance = await GetBalanceAsync(accountId, token, userId).ConfigureAwait(false);
+                    var balance = await GetBalanceAsync(accountId, token, userId)
+                        .ConfigureAwait(false);
                     results.Add(balance);
                 }
                 catch (NotFoundException)
@@ -153,23 +185,36 @@ namespace FintechStatsPlatform.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex.ToString()}");
+                    Console.WriteLine(
+                        $"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex.ToString()}"
+                    );
                 }
 
             return results;
         }
 
-        public async Task<Balance> GetBalanceAsync(string accountId, string tinkAccessToken, string userId)
+        public async Task<Balance> GetBalanceAsync(
+            string accountId,
+            string tinkAccessToken,
+            string userId
+        )
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, EnvConfig.TinkGetBalanceUri(accountId));
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tinkAccessToken);
-
+            var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                EnvConfig.TinkGetBalanceUri(accountId)
+            );
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                tinkAccessToken
+            );
 
             var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Tink API error: {response.StatusCode} - {await response.Content.ReadAsStringAsync().ConfigureAwait(false)}");
+                Console.WriteLine(
+                    $"Tink API error: {response.StatusCode} - {await response.Content.ReadAsStringAsync().ConfigureAwait(false)}"
+                );
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     throw new AccountNotFoundException("id", accountId);
 
@@ -179,9 +224,7 @@ namespace FintechStatsPlatform.Services
             var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(content);
 
-            var available = doc.RootElement
-                .GetProperty("balances")
-                .GetProperty("available");
+            var available = doc.RootElement.GetProperty("balances").GetProperty("available");
 
             return new Balance(
                 userId,
@@ -192,31 +235,32 @@ namespace FintechStatsPlatform.Services
             );
         }
 
-
         public void ConnectMono()
         {
             throw new NotImplementedException("Has been not implemented yet");
         }
 
-        public async Task ConnectOtherBankAsync(string userId, string token)
+        public async Task ConnectOtherBankAsync(string userId, string tinkAccessToken)
         {
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", tinkAccessToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, EnvConfig.TinkListAccountUri);
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                tinkAccessToken
+            );
 
-            var response = await _httpClient.GetAsync(EnvConfig.TinkListAccountUri).ConfigureAwait(false);
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-
 
             var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
 
             var accountsJson = doc.RootElement.GetProperty("accounts");
 
-            var bank = _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER)
-                       ?? throw new BankNotFoundException("OTHER");
+            var bank =
+                _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER)
+                ?? throw new BankNotFoundException("OTHER");
 
             var userAccounts = new List<BankAccount>();
-
 
             foreach (var account in accountsJson.EnumerateArray())
             {
@@ -231,22 +275,29 @@ namespace FintechStatsPlatform.Services
                         .GetProperty("amount")
                         .GetProperty("value");
 
-                    var unscaled = long.Parse(amount.GetProperty("unscaledValue").GetString() ?? "");
+                    var unscaled = long.Parse(
+                        amount.GetProperty("unscaledValue").GetString() ?? ""
+                    );
                     var scale = int.Parse(amount.GetProperty("scale").GetString() ?? "");
                     var balance = unscaled * (long)Math.Pow(10, -scale);
 
-                    userAccounts.Add(new BankAccount
-                    {
-                        Id = fullBankId,
-                        UserId = userId,
-                        BankId = bank.Id ?? throw new BankNotFoundException("id"),
-                        Balance = balance,
-                        CurrencyScale = scale
-                    });
+                    userAccounts.Add(
+                        new BankAccount
+                        {
+                            Id = fullBankId,
+                            UserId = userId,
+                            BankId = bank.Id ?? throw new BankNotFoundException("id"),
+                            Balance = balance,
+                            CurrencyScale = scale,
+                        }
+                    );
                 }
                 catch (Exception ex)
                 {
-                    throw new UnexpectedException("Error while parsing account balance", (CustomException)ex);
+                    throw new UnexpectedException(
+                        "Error while parsing account balance",
+                        (CustomException)ex
+                    );
                 }
             }
 
@@ -254,19 +305,19 @@ namespace FintechStatsPlatform.Services
             await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-
         public string GetTinkAccessToken(string code = "")
         {
-
             var parameters = new Dictionary<string, string>()
             {
-                { "grant_type",  EnvConfig.TinkGrantType},
+                { "grant_type", EnvConfig.TinkGrantType },
                 { "code", code },
                 { "client_id", EnvConfig.TinkClientId },
-                { "client_secret",  EnvConfig.TinkClientSecret },
+                { "client_secret", EnvConfig.TinkClientSecret },
             };
 
-            var response = _httpClient.PostAsync(EnvConfig.TinkTokentUri, new FormUrlEncodedContent(parameters)).Result;
+            var response = _httpClient
+                .PostAsync(EnvConfig.TinkTokentUri, new FormUrlEncodedContent(parameters))
+                .Result;
             response.EnsureSuccessStatusCode();
 
             var json = response.Content.ReadAsStringAsync().Result;
@@ -276,7 +327,7 @@ namespace FintechStatsPlatform.Services
         }
 
         public async Task<List<BankConfig>> GetBanksAsync() =>
-             await _context.Banks.ToListAsync().ConfigureAwait(false);
+            await _context.Banks.ToListAsync().ConfigureAwait(false);
 
         public async Task<BankConfig> GetBankByIdAsync(string id) =>
             await _context.Banks.FindAsync(id).ConfigureAwait(false);
@@ -290,7 +341,8 @@ namespace FintechStatsPlatform.Services
 
         public async Task UpdateBankAsync(string id, BankConfig bank)
         {
-            if (bank == null || id != bank.Id) return;
+            if (bank == null || id != bank.Id)
+                return;
 
             _context.Entry(bank).State = EntityState.Modified;
 
@@ -300,7 +352,8 @@ namespace FintechStatsPlatform.Services
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await BankExistsAsync(id).ConfigureAwait(false)) return;
+                if (!await BankExistsAsync(id).ConfigureAwait(false))
+                    return;
                 throw;
             }
         }
@@ -308,7 +361,8 @@ namespace FintechStatsPlatform.Services
         public async Task<bool> DeleteBankAsync(string id)
         {
             var bank = await _context.Banks.FindAsync(id).ConfigureAwait(false);
-            if (bank == null) return false;
+            if (bank == null)
+                return false;
 
             _context.Banks.Remove(bank);
             await _context.SaveChangesAsync().ConfigureAwait(false);

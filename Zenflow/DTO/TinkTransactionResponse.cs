@@ -1,9 +1,5 @@
-﻿using FintechStatsPlatform.Enumirators;
-using FintechStatsPlatform.Migrations;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
-using System.Security.Policy;
-using System.Text.Json.Serialization;
-using System.Transactions;
+﻿using System.Text.Json.Serialization;
+using FintechStatsPlatform.Enumirators;
 
 namespace FintechStatsPlatform.DTO
 {
@@ -43,31 +39,22 @@ namespace FintechStatsPlatform.DTO
 
         [JsonPropertyName("accountId")]
         public string AccountId { get; init; }
-        
+
         public string UserId { get; set; }
-        
+
         public long Amount
         {
-            get
-            {
-                return OriginalAmount.UnscaledValue;
-            }
+            get { return OriginalAmount.UnscaledValue; }
         }
 
         public int Scale
         {
-            get
-            {
-                return OriginalAmount.Scale;
-            }
+            get { return OriginalAmount.Scale; }
         }
 
         public string Currency
         {
-            get
-            {
-                return OriginalAmount.CurrencyCode;
-            }
+            get { return OriginalAmount.CurrencyCode; }
         }
 
         public DateTime DateTime
@@ -82,18 +69,12 @@ namespace FintechStatsPlatform.DTO
 
         public string Result
         {
-            get
-            {
-                return Pending ? "SUCCESS" : "PENDING";
-            }
+            get { return Pending ? "SUCCESS" : "PENDING"; }
         }
 
         public TransactionType TransactionType
         {
-            get
-            {
-                return (TransactionType)Enum.Parse(typeof(TransactionType), CategoryTypeString);
-            }
+            get { return (TransactionType)Enum.Parse(typeof(TransactionType), CategoryTypeString); }
         }
     }
 }

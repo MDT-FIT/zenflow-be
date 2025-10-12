@@ -1,12 +1,6 @@
 ﻿using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace FintechStatsPlatform.Controllers
 {
@@ -32,15 +26,15 @@ namespace FintechStatsPlatform.Controllers
         public async Task<ActionResult<User>> GetUser(string id)
         {
             var user = await _userService.GetUserByIdAsync(id).ConfigureAwait(false);
-            if (user == null) return NotFound();
+            if (user == null)
+                return NotFound();
             return Ok(user);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(string id, User user)
         {
-            var updated = await _userService.UpdateUserAsync(id, user).ConfigureAwait(false);
-            if (!updated) return BadRequest();
+            await _userService.UpdateUserAsync(id, user).ConfigureAwait(false);
             return NoContent();
         }
 
@@ -55,7 +49,8 @@ namespace FintechStatsPlatform.Controllers
         public async Task<IActionResult> DeleteUser(string id)
         {
             var deleted = await _userService.DeleteUserAsync(id).ConfigureAwait(false);
-            if (!deleted) return NotFound();
+            if (!deleted)
+                return NotFound();
             return NoContent();
         }
     }

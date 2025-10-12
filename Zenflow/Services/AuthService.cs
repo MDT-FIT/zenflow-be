@@ -1,7 +1,7 @@
-﻿using FintechStatsPlatform.Models;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FintechStatsPlatform.Models;
 using Zenflow.Env;
 using static FintechStatsPlatform.Exceptions.ExceptionTypes;
 
@@ -67,7 +67,7 @@ namespace FintechStatsPlatform.Services
                 password = password,
                 connection = EnvConfig.AuthConnection,
                 name = username,
-                username = username
+                username = username,
             };
 
             var content = new StringContent(
@@ -76,17 +76,17 @@ namespace FintechStatsPlatform.Services
                 "application/json"
             );
 
-            var response = await _httpClient.PostAsync(
-                EnvConfig.AuthConnectUri,
-                content
-            ).ConfigureAwait(false);
+            var response = await _httpClient
+                .PostAsync(EnvConfig.AuthConnectUri, content)
+                .ConfigureAwait(false);
 
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
                 throw new Auth0Exception($"Signup failed: {responseContent}");
 
-            var signupResponse = JsonSerializer.Deserialize<Auth0UserInfo>(responseContent)
+            var signupResponse =
+                JsonSerializer.Deserialize<Auth0UserInfo>(responseContent)
                 ?? throw new Auth0DeserializationException("signup response");
 
             await LogInAsync(email, password).ConfigureAwait(false);
@@ -109,7 +109,7 @@ namespace FintechStatsPlatform.Services
                 client_secret = EnvConfig.AuthClientSecret,
                 audience = EnvConfig.AuthAudience,
                 scope = "openid profile email offline_access",
-                realm = EnvConfig.AuthConnection
+                realm = EnvConfig.AuthConnection,
             };
 
             var content = new StringContent(
@@ -118,17 +118,17 @@ namespace FintechStatsPlatform.Services
                 "application/json"
             );
 
-            var response = await _httpClient.PostAsync(
-                EnvConfig.AuthTokenUri,
-                content
-            ).ConfigureAwait(false);
+            var response = await _httpClient
+                .PostAsync(EnvConfig.AuthTokenUri, content)
+                .ConfigureAwait(false);
 
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
                 throw new Auth0Exception($"Authentication failed: {responseContent}");
 
-            var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
+            var tokenResponse =
+                JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
                 ?? throw new JsonParsingException("Failed to deserialize Auth0 response");
 
             return tokenResponse;
@@ -181,7 +181,7 @@ namespace FintechStatsPlatform.Services
                 grant_type = "refresh_token",
                 client_id = EnvConfig.AuthClientId,
                 client_secret = EnvConfig.AuthClientSecret,
-                refresh_token = refreshToken
+                refresh_token = refreshToken,
             };
 
             var content = new StringContent(
@@ -190,10 +190,9 @@ namespace FintechStatsPlatform.Services
                 "application/json"
             );
 
-            var response = await _httpClient.PostAsync(
-                EnvConfig.AuthTokenUri,
-                content
-            ).ConfigureAwait(false);
+            var response = await _httpClient
+                .PostAsync(EnvConfig.AuthTokenUri, content)
+                .ConfigureAwait(false);
 
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
@@ -202,15 +201,6 @@ namespace FintechStatsPlatform.Services
 
             return JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
                 ?? throw new Auth0DeserializationException("refresh token response");
-        }
-
-        /// <summary>
-        /// Logout (на клієнті видаляємо токен)
-        /// </summary>
-        public void LogOut(string? accessToken = null)
-        {
-            // Для token-based auth logout відбувається на клієнті
-            // Токен просто видаляється з localStorage
         }
 
         /// <summary>
@@ -253,17 +243,19 @@ namespace FintechStatsPlatform.Services
                 "application/json"
             );
 
-            var response = await _httpClient.PostAsync(EnvConfig.AuthTokenUri, content).ConfigureAwait(false);
+            var response = await _httpClient
+                .PostAsync(EnvConfig.AuthTokenUri, content)
+                .ConfigureAwait(false);
             var responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
                 throw new Auth0Exception($"Failed to get user token: {responseContent}");
 
-            var tokenResponse = JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
-            ?? throw new Auth0DeserializationException("token response");
+            var tokenResponse =
+                JsonSerializer.Deserialize<Auth0TokenResponse>(responseContent)
+                ?? throw new Auth0DeserializationException("token response");
 
             return tokenResponse.AccessToken;
         }
-
     }
 }

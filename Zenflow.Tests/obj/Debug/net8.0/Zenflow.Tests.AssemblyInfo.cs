@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zenflow.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4ba2f9d9008e131fe3a847523a16f01cd4d338a0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5055f6553723245edb6e49c9f45445568b6e0616")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zenflow.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zenflow.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

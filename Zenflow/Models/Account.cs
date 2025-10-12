@@ -4,7 +4,13 @@ namespace FintechStatsPlatform.Models
 {
     public class Account : AbstractEntity
     {
-        public Account(string userId, string bankUserId = "", string bankId = "", long balance = 0, List<Card>? cards = null)
+        public Account(
+            string userId,
+            string bankUserId = "",
+            string bankId = "",
+            long balance = 0,
+            List<Card>? cards = null
+        )
         {
             UserId = userId;
             BankUserId = bankUserId;
@@ -25,7 +31,11 @@ namespace FintechStatsPlatform.Models
 
         public Card getCardInfo(string cardNumber, BankName bank)
         {
-            return Cards.Find(card => String.Concat(card.CardBin, card.LastFour).Equals(cardNumber, StringComparison.OrdinalIgnoreCase));
+            return Cards.Find(card =>
+                String
+                    .Concat(card.CardBin, card.LastFour)
+                    .Equals(cardNumber, StringComparison.OrdinalIgnoreCase)
+            );
         }
     }
 }

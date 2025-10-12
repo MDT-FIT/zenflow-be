@@ -1,11 +1,10 @@
-﻿using MapsterMapper;
-using System.Text;
+﻿using System.Text;
+using MapsterMapper;
 
 namespace FintechStatsPlatform.Filters
 {
     public class TransactionFilter : AbstractFilter
     {
-
         public DateTime DateFrom { get; set; }
 
         public DateTime DateTo { get; set; } = DateTime.Now;
@@ -30,6 +29,5 @@ namespace FintechStatsPlatform.Filters
 
             return sb.ToString();
         }
-
     }
 }
