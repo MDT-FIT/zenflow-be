@@ -4,6 +4,7 @@ using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using FintechStatsPlatform.Exceptions;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 
 namespace FintechStatsPlatform.Controllers
@@ -36,7 +37,6 @@ namespace FintechStatsPlatform.Controllers
 			
 		}
 
-
         [HttpPost("transactions")]
         public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
         {
@@ -67,40 +67,16 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost("stats/expenses")]
         public async Task<ActionResult> GetExpensesStats([FromBody] StatsFilter filter)
         {
-            if (filter == null || filter.UserId is null) return BadRequest();
-
-            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
-
-            if (string.IsNullOrEmpty(token))
-            {
-                return Unauthorized("Token is invalid or expired");
-            }
-
-            try
-            {
-                var stats = await _analyticService.getExpensesAsync(filter, token);
-                return Ok(stats);
-            }
-            catch (ExceptionTypes.JsonParsingException jsonEx)
-            {
-                return StatusCode(500, jsonEx.Message);
-            }
-            catch (ExceptionTypes.ExternalApiException apiEx)
-            {
-                return StatusCode(500, apiEx.Message);
-            }
-            catch (HttpRequestException httpEx)
-            {
-                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
-            }
+            return await StatsEndPointBase(_analyticService.GetExpensesAsync, filter, "expenses");
         }
 
         [HttpPost("stats/income")]
         public async Task<ActionResult> GetIncomeStats([FromBody] StatsFilter filter)
+        {
+            return await StatsEndPointBase(_analyticService.GetIncomeAsync, filter, "income");
+        }
+
+        private async Task<ActionResult> StatsEndPointBase(Func<StatsFilter, string, Task<Stats>> getOperation, StatsFilter filter, string typeName)
         {
             if (filter == null || filter.UserId is null) return BadRequest();
 
@@ -113,7 +89,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var stats = await _analyticService.getIncome(filter, token);
+                var stats = await getOperation(filter, token);
                 return Ok(stats);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
@@ -130,7 +106,7 @@ namespace FintechStatsPlatform.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
+                return StatusCode(500, new { message = $"Failed to get {typeName}: {ex.Message}" });
             }
         }
 
@@ -148,7 +124,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var card = await _analyticService.getMostUsedCard(filter, token);
+                var card = await _analyticService.GetMostUsedCardAsync(filter, token);
                 return Ok(card);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
