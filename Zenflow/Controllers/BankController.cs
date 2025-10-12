@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using FintechStatsPlatform.Exceptions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using FintechStatsPlatform.Helpers;
 
 
 namespace FintechStatsPlatform.Controllers
@@ -199,12 +200,7 @@ namespace FintechStatsPlatform.Controllers
 			{
 				var token = _banksService.GetTinkAccessToken(code);
 
-				HttpContext.Response.Cookies.Append(_tinkJwtTokenKey,token,new CookieOptions {
-					HttpOnly = true,
-					Secure = true,
-					SameSite = SameSiteMode.Strict,
-					Expires = DateTimeOffset.UtcNow.AddHours(1)
-				});
+				HttpContext.Response.Cookies.Append(_tinkJwtTokenKey,token, CookieConfig.Default);
 
 				await _banksService.ConnectOtherBankAsync(userId, token);
 

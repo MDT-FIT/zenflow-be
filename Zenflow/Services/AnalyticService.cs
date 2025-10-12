@@ -15,13 +15,11 @@ namespace FintechStatsPlatform.Services
     {
         private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_API_LINK") ?? "";
         private readonly BankService _bankService;
-        private readonly FintechContext _context;
         private readonly HttpClient _httpClient;
 
-        public AnalyticService(BankService bankService, FintechContext context, HttpClient httpClient)
+        public AnalyticService(BankService bankService, HttpClient httpClient)
         {
             _bankService = bankService;
-            _context = context;
             _httpClient = httpClient;
         }
 
@@ -70,7 +68,7 @@ namespace FintechStatsPlatform.Services
             return new Stats(filter.UserId, [.. filter.AccountIds], currentAmount, scale, currency, changePercentage);
         }
 
-        private (int, string) GetCurrencyAndScale(List<TinkTransaction> current, List<TinkTransaction> prev)
+        private static (int, string) GetCurrencyAndScale(List<TinkTransaction> current, List<TinkTransaction> prev)
         {
             int scale = 0;
             string currency = string.Empty;
@@ -89,7 +87,7 @@ namespace FintechStatsPlatform.Services
             return (scale, currency);
         }
 
-        private double CalculateChangePercentage(long current, long prev)
+        private static double CalculateChangePercentage(long current, long prev)
         {
             if (current == 0 && prev == 0)
             {
