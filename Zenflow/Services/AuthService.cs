@@ -2,8 +2,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FintechStatsPlatform.Models;
-using Zenflow.Env;
-using static FintechStatsPlatform.Exceptions.ExceptionTypes;
+using Zenflow.Helpers;
+using static Zenflow.Helpers.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {

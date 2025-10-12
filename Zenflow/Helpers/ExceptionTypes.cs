@@ -1,4 +1,4 @@
-﻿namespace FintechStatsPlatform.Exceptions
+﻿namespace Zenflow.Helpers
 {
     public static class ExceptionTypes
     {

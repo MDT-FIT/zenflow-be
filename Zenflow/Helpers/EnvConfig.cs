@@ -1,6 +1,4 @@
-﻿using FintechStatsPlatform.Models;
-
-namespace Zenflow.Env
+﻿namespace Zenflow.Helpers
 {
     public static class EnvConfig
     {
