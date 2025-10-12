@@ -33,7 +33,8 @@ namespace FintechStatsPlatform.Services
             _context = context;
         }
 
-        public async Task<List<TinkTransaction>> ListTransactionsAsync(TransactionFilter filter, string userAccessToken)
+        public async Task<List<TinkTransaction>> ListTransactionsAsync(
+            TransactionFilter filter, string userAccessToken, int? minAmount = null, int? maxAmount = null)
         {
             // Get User accounts' ids if there is none
             if (filter.AccountIds == null || filter.AccountIds.Length == 0)
@@ -45,7 +46,15 @@ namespace FintechStatsPlatform.Services
             var tinkTransactions = new List<TinkTransaction>();
 
             // Define parameters and convert them to JSON content
-            var parameters = new { accounts = filter.AccountIds, startDate = filter.DateFrom, endDate = filter.DateTo };
+            var parameters = new
+            {
+                accounts = filter.AccountIds,
+                startDate = filter.DateFrom,
+                endDate = filter.DateTo,
+                minAmount,
+                maxAmount
+            };
+
             var jsonContent = JsonContent.Create(parameters);
 
             // Tink Api request
@@ -246,18 +255,6 @@ namespace FintechStatsPlatform.Services
             await _context.BankAccounts.AddRangeAsync(userAccountsList);
             await _context.SaveChangesAsync();
         }
-        //decimal Pow10(int exponent)
-        //{
-        //    decimal result = 1m;
-        //    if (exponent > 0)
-        //        for (int i = 0; i < exponent; i++)
-        //            result *= 10m;
-        //    else if (exponent < 0)
-        //        for (int i = 0; i < -exponent; i++)
-        //            result /= 10m;
-        //    return result;
-        //}
-
 
         public string GetTinkAccessToken(string code = "")
         {

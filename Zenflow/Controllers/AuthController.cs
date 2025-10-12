@@ -1,4 +1,5 @@
 ﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -63,14 +64,7 @@ namespace FintechStatsPlatform.Controllers
                 _logger.LogInformation("User successfully registered: {Email}", request.Email);
 
 
-                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
-                });
-
+                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, CookieConfig.Default);
 
                 return Ok(new
                 {
@@ -125,13 +119,7 @@ namespace FintechStatsPlatform.Controllers
                 _logger.LogInformation("User successfully logged in: {Email}", request.Email);
 
 
-                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.Strict,
-                    Expires = DateTimeOffset.UtcNow.AddHours(1)
-                });
+                HttpContext.Response.Cookies.Append(_jwtTokenKey, tokenResponse.AccessToken, CookieConfig.Default);
 
                 return Ok(new
                 {
