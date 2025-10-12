@@ -1,5 +1,5 @@
 
-﻿using FintechStatsPlatform.DTO;
+using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Enumirators;
 using FintechStatsPlatform.Exceptions;
 using FintechStatsPlatform.Filters;
@@ -33,7 +33,8 @@ namespace FintechStatsPlatform.Services
             _context = context;
         }
 
-        public async Task<List<TinkTransaction>> ListTransactionsAsync(TransactionFilter filter, string userAccessToken)
+        public async Task<List<TinkTransaction>> ListTransactionsAsync(
+            TransactionFilter filter, string userAccessToken, int? minAmount = null, int? maxAmount = null)
         {
             // Get User accounts' ids if there is none
             if (filter.AccountIds == null || filter.AccountIds.Length == 0)
@@ -49,6 +50,8 @@ namespace FintechStatsPlatform.Services
                 accounts = filter.AccountIds,
                 startDate = filter.DateFrom,
                 endDate = filter.DateTo,
+                minAmount,
+                maxAmount
             };
 
             var jsonContent = JsonContent.Create(parameters);
@@ -82,7 +85,7 @@ namespace FintechStatsPlatform.Services
             // Attach User's id to each transaction
             if (transactions != null)
             {
-                foreach(var transaction in transactions)
+                foreach (var transaction in transactions)
                 {
                     transaction.UserId = filter.UserId;
                 }
@@ -102,7 +105,7 @@ namespace FintechStatsPlatform.Services
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
             if (user == null)
-                throw new ExceptionTypes.UserNotFoundException("id",userId);
+                throw new ExceptionTypes.UserNotFoundException("id", userId);
             else
             {
                 var allBankConfigs = _context.Banks.ToList();
@@ -119,7 +122,7 @@ namespace FintechStatsPlatform.Services
                     var balance = await GetBalanceAsync(accountId, token, userId);
                     results.Add(balance);
                 }
-                catch(NotFoundException ex) 
+                catch (NotFoundException ex)
                 {
                     results.Add(new Balance(userId));
                 }
@@ -133,7 +136,7 @@ namespace FintechStatsPlatform.Services
 
         public async Task<Balance> GetBalanceAsync(string accountId, string userAccessToken, string userId)
         {
-               
+
             var results = new List<Balance>();
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
@@ -160,7 +163,7 @@ namespace FintechStatsPlatform.Services
                 .GetProperty("available");
 
             return new Balance
-            (   userId,
+            (userId,
                 available.GetProperty("unscaledValue").GetInt64(),
                 available.GetProperty("scale").GetInt32(),
                 doc.RootElement.GetProperty("accountId").GetString(),
@@ -194,7 +197,7 @@ namespace FintechStatsPlatform.Services
 
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
-            
+
 
             var accountsJson = doc.RootElement.GetProperty("accounts");
 
@@ -232,7 +235,7 @@ namespace FintechStatsPlatform.Services
                 }
                 catch (Exception ex)
                 {
-                    throw new UnexpectedException("attempt to connect to other bank",(CustomException)ex);
+                    throw new UnexpectedException("attempt to connect to other bank", (CustomException)ex);
                 }
 
                 userAccountsList.Add(new BankAccount
