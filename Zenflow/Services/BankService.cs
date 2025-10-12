@@ -42,7 +42,8 @@ namespace FintechStatsPlatform.Services
                 filter.AccountIds = [.. GetUserAccounts(filter.UserId).Select(a => a.Id)];
             }
 
-            filter.AccountIds = [.. filter.AccountIds.Select(a => a.Replace("tink-", ""))];
+            var tinkAccountIds = filter.AccountIds.Where(a => a.StartsWith("tink")).Select(a => a.Replace("tink-", "")).ToArray();
+            var tinkTransactions = new List<TinkTransaction>();
 
             // Define parameters and convert them to JSON content
             var parameters = new
@@ -56,42 +57,45 @@ namespace FintechStatsPlatform.Services
 
             var jsonContent = JsonContent.Create(parameters);
 
-            // Form POST request to Tink's API
-            var requestMessage = new HttpRequestMessage
+            // Tink Api request
+            if (tinkAccountIds != null && tinkAccountIds.Length > 0)
             {
-                Method = HttpMethod.Post,
-                Content = jsonContent,
-                RequestUri = new Uri($"{BaseApiLink}/api/v1/search"),
-            };
+                // Form POST request to Tink's API
+                var requestMessage = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Post,
+                    Content = jsonContent,
+                    RequestUri = new Uri($"{BaseApiLink}/api/v1/search"),
+                };
 
-            // Add header with user's access token
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+                // Add header with user's access token
+                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
 
-            var response = await _httpClient.SendAsync(requestMessage);
+                // Send request and throw exception in case it failed
+                var response = await _httpClient.SendAsync(requestMessage);
+                response.EnsureSuccessStatusCode();
 
-            // Throw exception in case request failed
-            response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                tinkTransactions = apiResponse?.Results
+                    .Select(r => r.Transaction).ToList();
+            }
 
-            var content = await response.Content.ReadAsStringAsync();
-
-            var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            var transactions = apiResponse?.Results
-                .Select(r => r.Transaction).ToList();
+            // Add mono logic later {...}
 
             // Attach User's id to each transaction
-            if (transactions != null)
+            if (tinkTransactions != null)
             {
-                foreach (var transaction in transactions)
+                foreach (var transaction in tinkTransactions)
                 {
                     transaction.UserId = filter.UserId;
                 }
             }
 
-            return transactions ?? [];
+            return tinkTransactions ?? [];
         }
 
         private List<BankAccount> GetUserAccounts(string userId)
@@ -251,18 +255,6 @@ namespace FintechStatsPlatform.Services
             await _context.BankAccounts.AddRangeAsync(userAccountsList);
             await _context.SaveChangesAsync();
         }
-        //decimal Pow10(int exponent)
-        //{
-        //    decimal result = 1m;
-        //    if (exponent > 0)
-        //        for (int i = 0; i < exponent; i++)
-        //            result *= 10m;
-        //    else if (exponent < 0)
-        //        for (int i = 0; i < -exponent; i++)
-        //            result /= 10m;
-        //    return result;
-        //}
-
 
         public string GetTinkAccessToken(string code = "")
         {
