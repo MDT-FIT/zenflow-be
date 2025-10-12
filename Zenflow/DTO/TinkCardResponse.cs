@@ -7,6 +7,7 @@ namespace FintechStatsPlatform.DTO
     {
         public string Name { get; set; }
 
+        [JsonPropertyName("type")]
         public string TypeString { private get; init; }
 
         [JsonPropertyName("identifiers")]
@@ -16,7 +17,8 @@ namespace FintechStatsPlatform.DTO
         {
             get
             {
-                return TinkCardIdentifiers.Pan[^4..];
+                string pan = TinkCardIdentifiers.Pan;
+                return string.IsNullOrEmpty(pan) ? string.Empty : pan[^4..];
             }
         }
 
@@ -24,7 +26,8 @@ namespace FintechStatsPlatform.DTO
         {
             get
             {
-                return TinkCardIdentifiers.Pan[..4];
+                string pan = TinkCardIdentifiers.Pan;
+                return string.IsNullOrEmpty(pan) ? string.Empty : pan[..4];
             }
         }
 
@@ -39,6 +42,7 @@ namespace FintechStatsPlatform.DTO
 
     public class TinkCardIdentifiers
     {
+        [JsonPropertyName("pan")]
         public string Pan { get; set; }
     }
 }
