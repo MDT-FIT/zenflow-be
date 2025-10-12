@@ -1,101 +1,151 @@
-
+using System.Net.Http.Headers;
+using System.Text.Json;
 using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Enumirators;
-using FintechStatsPlatform.Exceptions;
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Common;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Threading.Tasks;
-using static FintechStatsPlatform.Exceptions.ExceptionTypes;
-
+using Zenflow.Helpers;
+using static Zenflow.Helpers.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {
     public class BankService
     {
-        private readonly string BaseApiLink = Environment.GetEnvironmentVariable("TINK_API_LINK") ?? "";
-        private readonly string _clientId;
-        private readonly string _clientSecret;
         private readonly HttpClient _httpClient;
         private readonly FintechContext _context;
+        private readonly JsonSerializerOptions serializationOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+        };
 
         public BankService(HttpClient httpClient, FintechContext context)
         {
-            _clientId = Environment.GetEnvironmentVariable("TINK_CLIENT_ID") ?? "";
-            _clientSecret = Environment.GetEnvironmentVariable("TINK_CLIENT_SECRET") ?? "";
-            _httpClient = new HttpClient();
             _httpClient = httpClient;
             _context = context;
         }
 
         public async Task<List<TinkTransaction>> ListTransactionsAsync(
-            TransactionFilter filter, string userAccessToken, int? minAmount = null, int? maxAmount = null)
+            TransactionFilter filter,
+            string userAccessToken,
+            int? minAmount = null,
+            int? maxAmount = null
+        )
         {
-            // Get User accounts' ids if there is none
-            if (filter.AccountIds == null || filter.AccountIds.Length == 0)
-            {
-                filter.AccountIds = [.. GetUserAccounts(filter.UserId).Select(a => a.Id)];
-            }
+            if (filter == null)
+                throw new ParameterNotFound("filter", "filter", "");
 
-            var tinkAccountIds = filter.AccountIds.Where(a => a.StartsWith("tink")).Select(a => a.Replace("tink-", "")).ToArray();
+            if (filter.AccountIds.Count == 0)
+                filter.AccountIds.AddRange(
+                    GetUserAccounts(filter.UserId).Select(a => a.Id!).ToList()
+                );
+
+            var tinkAccountIds = filter
+                .AccountIds.Where(a =>
+                    a.StartsWith(
+                        BankNameMapper.BankNameToIdMap[BankName.OTHER],
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                .Select(a =>
+                    a.Replace(
+                        BankNameMapper.BankNameToIdMap[BankName.OTHER],
+                        "",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                .ToArray();
+
             var tinkTransactions = new List<TinkTransaction>();
 
-            // Define parameters and convert them to JSON content
-            var parameters = new
+            if (tinkAccountIds.Length > 0)
             {
-                accounts = filter.AccountIds,
-                startDate = filter.DateFrom,
-                endDate = filter.DateTo,
-                minAmount,
-                maxAmount
-            };
-
-            var jsonContent = JsonContent.Create(parameters);
-
-            // Tink Api request
-            if (tinkAccountIds != null && tinkAccountIds.Length > 0)
-            {
-                // Form POST request to Tink's API
-                var requestMessage = new HttpRequestMessage
+                var parameters = new
                 {
-                    Method = HttpMethod.Post,
-                    Content = jsonContent,
-                    RequestUri = new Uri($"{BaseApiLink}/api/v1/search"),
+                    accounts = filter.AccountIds,
+                    startDate = filter.DateFrom,
+                    endDate = filter.DateTo,
+                    minAmount,
+                    maxAmount,
                 };
 
-                // Add header with user's access token
-                requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+                var request = new HttpRequestMessage(
+                    HttpMethod.Post,
+                    EnvConfig.TinkListTransactionUri
+                )
+                {
+                    Content = JsonContent.Create(parameters),
+                };
+                request.Headers.Authorization = new AuthenticationHeaderValue(
+                    "Bearer",
+                    userAccessToken
+                );
 
-                // Send request and throw exception in case it failed
-                var response = await _httpClient.SendAsync(requestMessage);
+                var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-                tinkTransactions = apiResponse?.Results
-                    .Select(r => r.Transaction).ToList();
+                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(
+                    content,
+                    serializationOptions
+                );
+
+                tinkTransactions = apiResponse?.Results.Select(r => r.Transaction).ToList() ?? [];
             }
 
-            // Add mono logic later {...}
-
-            // Attach User's id to each transaction
-            if (tinkTransactions != null)
+            foreach (var transaction in tinkTransactions)
             {
-                foreach (var transaction in tinkTransactions)
-                {
-                    transaction.UserId = filter.UserId;
-                }
+                transaction.UserId = filter.UserId;
             }
 
-            return tinkTransactions ?? [];
+            return tinkTransactions;
+
+            //// Define parameters and convert them to JSON content
+            //var parameters = new { accounts = filter.AccountIds, startDate = filter.DateFrom, endDate = filter.DateTo };
+            //var jsonContent = JsonContent.Create(parameters);
+
+            //// Tink Api request
+            //if (tinkAccountIds != null && tinkAccountIds.Length > 0)
+            //{
+            //    // Form POST request to Tink's API
+            //    var requestMessage = new HttpRequestMessage
+            //    {
+            //        Method = HttpMethod.Post,
+            //        Content = jsonContent,
+            //        RequestUri = EnvConfig.TinkListTransactionUri,
+            //    };
+
+            //    // Add header with user's access token
+            //    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+
+            //    // Send request and throw exception in case it failed
+            //    var response = await _httpClient.SendAsync(requestMessage).ConfigureAwait(false);
+            //    response.EnsureSuccessStatusCode();
+
+            //    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+            //    var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
+            //    {
+            //        PropertyNameCaseInsensitive = true
+            //    });
+
+            //    tinkTransactions = apiResponse?.Results
+            //        .Select(r => r.Transaction).ToList();
+            //}
+
+            //// Add mono logic later {...}
+
+            //// Attach User's id to each transaction
+            //if (tinkTransactions != null)
+            //{
+            //    foreach (var transaction in tinkTransactions)
+            //    {
+            //        transaction.UserId = filter.UserId;
+            //    }
+            //}
+
+            //return tinkTransactions ?? [];
         }
 
         private List<BankAccount> GetUserAccounts(string userId)
@@ -105,229 +155,221 @@ namespace FintechStatsPlatform.Services
 
         public List<BankConfig> ListBankConfigs(string userId)
         {
+            var user =
+                _context.Users.FirstOrDefault(u => u.Id == userId)
+                ?? throw new UserNotFoundException("id", userId);
 
-            var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+            var allConfigs = _context.Banks.ToList();
 
-            if (user == null)
-                throw new ExceptionTypes.UserNotFoundException("id", userId);
-            else
-            {
-                var allBankConfigs = _context.Banks.ToList();
-                List<BankConfig> filterdConfigs = allBankConfigs.Where(config => !user.IsBankConnected(config.Name)).ToList();
-                return filterdConfigs;
-            }
+            return allConfigs.Where(config => !user.IsBankConnected(config.Name)).ToList();
         }
-        public async Task<List<Balance>> GetBalancesAsync(List<string> accountIds, string token, string userId)
+
+        public async Task<List<Balance>> GetBalancesAsync(
+            List<string> accountIds,
+            string token,
+            string userId
+        )
         {
             var results = new List<Balance>();
+
             foreach (var accountId in accountIds)
                 try
                 {
-                    var balance = await GetBalanceAsync(accountId, token, userId);
+                    var balance = await GetBalanceAsync(accountId, token, userId)
+                        .ConfigureAwait(false);
                     results.Add(balance);
                 }
-                catch (NotFoundException ex)
+                catch (NotFoundException)
                 {
                     results.Add(new Balance(userId));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex.ToString()}");
+                    Console.WriteLine(
+                        $"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex.ToString()}"
+                    );
                 }
 
             return results;
         }
 
-        public async Task<Balance> GetBalanceAsync(string accountId, string userAccessToken, string userId)
+        public async Task<Balance> GetBalanceAsync(
+            string accountId,
+            string tinkAccessToken,
+            string userId
+        )
         {
-
-            var results = new List<Balance>();
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"{BaseApiLink}/api/v1/accounts/{accountId}/balances"
+                EnvConfig.TinkGetBalanceUri(accountId)
             );
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                tinkAccessToken
+            );
 
-            var response = await _httpClient.SendAsync(request);
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Tink API returned {response.StatusCode}: {await response.Content.ReadAsStringAsync()}");
+                Console.WriteLine(
+                    $"Tink API error: {response.StatusCode} - {await response.Content.ReadAsStringAsync().ConfigureAwait(false)}"
+                );
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     throw new AccountNotFoundException("id", accountId);
+
                 throw new ExternalApiException("Tink", $"Status: {response.StatusCode}");
             }
 
-            var content = await response.Content.ReadAsStringAsync();
-
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(content);
 
-            var available = doc.RootElement
-                .GetProperty("balances")
-                .GetProperty("available");
+            var available = doc.RootElement.GetProperty("balances").GetProperty("available");
 
-            return new Balance
-            (userId,
+            return new Balance(
+                userId,
                 available.GetProperty("unscaledValue").GetInt64(),
                 available.GetProperty("scale").GetInt32(),
-                doc.RootElement.GetProperty("accountId").GetString(),
-                available.GetProperty("currencyCode").GetString()
+                doc.RootElement.GetProperty("accountId").GetString() ?? "",
+                available.GetProperty("currencyCode").GetString() ?? ""
             );
         }
-
 
         public void ConnectMono()
         {
             throw new NotImplementedException("Has been not implemented yet");
         }
 
-        public async Task ConnectOtherBankAsync(string userId, string token)
+        public async Task ConnectOtherBankAsync(string userId, string tinkAccessToken)
         {
-            try
-            {
+            var request = new HttpRequestMessage(HttpMethod.Get, EnvConfig.TinkListAccountUri);
+            request.Headers.Authorization = new AuthenticationHeaderValue(
+                "Bearer",
+                tinkAccessToken
+            );
 
-            }
-            catch (ExternalApiException ex)
-            {
-
-            }
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
-
-            var response = await _httpClient.GetAsync($"{BaseApiLink}/data/v2/accounts");
+            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            if (!response.IsSuccessStatusCode)
-                throw new ExternalApiException("Tink", $"{response.Content.ToString()}");
 
-            var json = await response.Content.ReadAsStringAsync();
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
-
 
             var accountsJson = doc.RootElement.GetProperty("accounts");
 
-            List<BankAccount> userAccountsList = new List<BankAccount>();
+            var bank =
+                _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER)
+                ?? throw new BankNotFoundException("OTHER");
 
-            var bank = _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER);
-            if (bank == null)
-                throw new BankNotFoundException("OTHER");
+            var userAccounts = new List<BankAccount>();
 
-            foreach (var tinkAccount in accountsJson.EnumerateArray())
+            foreach (var account in accountsJson.EnumerateArray())
             {
-                string id = tinkAccount.GetProperty("id").GetString();
-                string fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
-
-
-                int scale = 0;
-                long result = 0;
-                long unscaled = 0;
+                var id = account.GetProperty("id").GetString();
+                var fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
 
                 try
                 {
-                    var value = tinkAccount
+                    var amount = account
                         .GetProperty("balances")
                         .GetProperty("booked")
                         .GetProperty("amount")
                         .GetProperty("value");
 
-                    unscaled = long.Parse(value.GetProperty("unscaledValue").GetString());
-                    scale = int.Parse(value.GetProperty("scale").GetString());
-                    result = unscaled * (long)Math.Pow(10, -scale);
+                    var unscaled = long.Parse(
+                        amount.GetProperty("unscaledValue").GetString() ?? ""
+                    );
+                    var scale = int.Parse(amount.GetProperty("scale").GetString() ?? "");
+                    var balance = unscaled * (long)Math.Pow(10, -scale);
 
-
-                    Console.WriteLine($"Account {id}: unscaledValue={unscaled}, scale={scale}");
-
+                    userAccounts.Add(
+                        new BankAccount
+                        {
+                            Id = fullBankId,
+                            UserId = userId,
+                            BankId = bank.Id ?? throw new BankNotFoundException("id"),
+                            Balance = balance,
+                            CurrencyScale = scale,
+                        }
+                    );
                 }
                 catch (Exception ex)
                 {
-                    throw new UnexpectedException("attempt to connect to other bank", (CustomException)ex);
+                    throw new UnexpectedException(
+                        "Error while parsing account balance",
+                        (CustomException)ex
+                    );
                 }
-
-                userAccountsList.Add(new BankAccount
-                {
-                    Id = fullBankId,
-                    UserId = userId,
-                    BankId = bank?.Id ?? throw new BankNotFoundException(bank.Id, "id"),
-                    Balance = result,
-                    CurrencyScale = scale
-                });
             }
 
-            await _context.BankAccounts.AddRangeAsync(userAccountsList);
-            await _context.SaveChangesAsync();
+            await _context.BankAccounts.AddRangeAsync(userAccounts).ConfigureAwait(false);
+            await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         public string GetTinkAccessToken(string code = "")
         {
-
             var parameters = new Dictionary<string, string>()
             {
-                { "grant_type", "authorization_code" },
+                { "grant_type", EnvConfig.TinkGrantType },
                 { "code", code },
-                { "client_id", _clientId },
-                { "client_secret", _clientSecret },
+                { "client_id", EnvConfig.TinkClientId },
+                { "client_secret", EnvConfig.TinkClientSecret },
             };
 
-            var content = new FormUrlEncodedContent(parameters);
-
-            var response = _httpClient.PostAsync($"{BaseApiLink}/api/v1/oauth/token", content).Result;
+            var response = _httpClient
+                .PostAsync(EnvConfig.TinkTokentUri, new FormUrlEncodedContent(parameters))
+                .Result;
             response.EnsureSuccessStatusCode();
+
             var json = response.Content.ReadAsStringAsync().Result;
-
             using var doc = JsonDocument.Parse(json);
-            var token = doc.RootElement.GetProperty("access_token").GetString();
-            int expiresIn = doc.RootElement.GetProperty("expires_in").GetInt32();
 
-            return token;
+            return doc.RootElement.GetProperty("access_token").GetString() ?? "";
         }
 
-        public async Task<List<BankConfig>> GetBanksAsync()
-        {
-            return await _context.Banks.ToListAsync();
-        }
+        public async Task<List<BankConfig>> GetBanksAsync() =>
+            await _context.Banks.ToListAsync().ConfigureAwait(false);
 
-        public async Task<BankConfig> GetBankByIdAsync(string id)
-        {
-            return await _context.Banks.FindAsync(id);
-        }
+        public async Task<BankConfig> GetBankByIdAsync(string id) =>
+            await _context.Banks.FindAsync(id).ConfigureAwait(false);
 
         public async Task<BankConfig> AddBankAsync(BankConfig bank)
         {
             _context.Banks.Add(bank);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return bank;
         }
 
-        public async Task<bool> UpdateBankAsync(string id, BankConfig bank)
+        public async Task UpdateBankAsync(string id, BankConfig bank)
         {
-            if (id != bank.Id) return false;
+            if (bank == null || id != bank.Id)
+                return;
 
             _context.Entry(bank).State = EntityState.Modified;
 
             try
             {
-                await _context.SaveChangesAsync();
-                return true;
+                await _context.SaveChangesAsync().ConfigureAwait(false);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!await BankExistsAsync(id)) return false;
+                if (!await BankExistsAsync(id).ConfigureAwait(false))
+                    return;
                 throw;
             }
         }
 
         public async Task<bool> DeleteBankAsync(string id)
         {
-            var bank = await _context.Banks.FindAsync(id);
-            if (bank == null) return false;
+            var bank = await _context.Banks.FindAsync(id).ConfigureAwait(false);
+            if (bank == null)
+                return false;
 
             _context.Banks.Remove(bank);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
             return true;
         }
 
-        private async Task<bool> BankExistsAsync(string id)
-        {
-            return await _context.Banks.AnyAsync(b => b.Id == id);
-        }
+        private async Task<bool> BankExistsAsync(string id) =>
+            await _context.Banks.AnyAsync(b => b.Id == id).ConfigureAwait(false);
     }
 }

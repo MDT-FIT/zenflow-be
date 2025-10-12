@@ -2,6 +2,6 @@
 {
     public class AccountRequest
     {
-        public string AccountId { get; set; }
+        public string? AccountId { get; set; }
     }
 }

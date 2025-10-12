@@ -13,7 +13,8 @@ namespace FintechStatsPlatform.Migrations
             migrationBuilder.RenameColumn(
                 name: "account_id",
                 table: "users",
-                newName: "account_ids");
+                newName: "account_ids"
+            );
 
             migrationBuilder.AlterColumn<long>(
                 name: "balance",
@@ -23,27 +24,28 @@ namespace FintechStatsPlatform.Migrations
                 defaultValue: 0L,
                 oldClrType: typeof(decimal),
                 oldType: "numeric(10,2)",
-                oldDefaultValue: 0m);
+                oldDefaultValue: 0m
+            );
 
             migrationBuilder.AddColumn<short>(
                 name: "currency_scale",
                 table: "bank_accounts",
                 type: "smallint",
                 nullable: false,
-                defaultValue: (short)2);
+                defaultValue: (short)2
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "currency_scale",
-                table: "bank_accounts");
+            migrationBuilder.DropColumn(name: "currency_scale", table: "bank_accounts");
 
             migrationBuilder.RenameColumn(
                 name: "account_ids",
                 table: "users",
-                newName: "account_id");
+                newName: "account_id"
+            );
 
             migrationBuilder.AlterColumn<decimal>(
                 name: "balance",
@@ -53,7 +55,8 @@ namespace FintechStatsPlatform.Migrations
                 defaultValue: 0m,
                 oldClrType: typeof(long),
                 oldType: "bigint",
-                oldDefaultValue: 0L);
+                oldDefaultValue: 0L
+            );
         }
     }
 }

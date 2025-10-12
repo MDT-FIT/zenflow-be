@@ -1,12 +1,6 @@
 ﻿using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace FintechStatsPlatform.Controllers
 {
@@ -24,38 +18,39 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            var users = await _userService.GetUsersAsync();
+            var users = await _userService.GetUsersAsync().ConfigureAwait(false);
             return Ok(users);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(string id)
         {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null) return NotFound();
+            var user = await _userService.GetUserByIdAsync(id).ConfigureAwait(false);
+            if (user == null)
+                return NotFound();
             return Ok(user);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(string id, User user)
         {
-            var updated = await _userService.UpdateUserAsync(id, user);
-            if (!updated) return BadRequest();
+            await _userService.UpdateUserAsync(id, user).ConfigureAwait(false);
             return NoContent();
         }
 
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            var createdUser = await _userService.CreateUserAsync(user);
+            var createdUser = await _userService.CreateUserAsync(user).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetUser), new { id = createdUser.Id }, createdUser);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(string id)
         {
-            var deleted = await _userService.DeleteUserAsync(id);
-            if (!deleted) return NotFound();
+            var deleted = await _userService.DeleteUserAsync(id).ConfigureAwait(false);
+            if (!deleted)
+                return NotFound();
             return NoContent();
         }
     }

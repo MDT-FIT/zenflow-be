@@ -16,6 +16,6 @@ namespace FintechStatsPlatform.Enumirators
         TRANSFER,
 
         [Description("DEFAULT")]
-        DEFAULT
+        DEFAULT,
     }
 }

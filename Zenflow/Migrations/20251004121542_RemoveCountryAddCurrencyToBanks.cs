@@ -10,19 +10,13 @@ namespace FintechStatsPlatform.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "country",
-                table: "banks",
-                newName: "currency");
+            migrationBuilder.RenameColumn(name: "country", table: "banks", newName: "currency");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "currency",
-                table: "banks",
-                newName: "country");
+            migrationBuilder.RenameColumn(name: "currency", table: "banks", newName: "country");
         }
     }
 }

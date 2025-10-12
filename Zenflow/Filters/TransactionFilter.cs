@@ -1,11 +1,10 @@
-﻿using MapsterMapper;
-using System.Text;
+﻿using System.Text;
+using MapsterMapper;
 
 namespace FintechStatsPlatform.Filters
 {
     public class TransactionFilter : AbstractFilter
     {
-
         public DateTime DateFrom { get; set; }
 
         public DateTime DateTo { get; set; } = DateTime.Now;
@@ -14,9 +13,9 @@ namespace FintechStatsPlatform.Filters
         {
             var sb = new StringBuilder();
 
-            if (accountIds != null && accountIds.Length != 0)
+            if (AccountIds != null && AccountIds.Count != 0)
             {
-                foreach (var accountId in accountIds)
+                foreach (var accountId in AccountIds)
                 {
                     sb.Append($"accounts={accountId}&");
                 }
@@ -30,6 +29,5 @@ namespace FintechStatsPlatform.Filters
 
             return sb.ToString();
         }
-
     }
 }

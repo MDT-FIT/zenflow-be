@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Reflection.Emit;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Reflection.Emit;
 
 namespace FintechStatsPlatform.Models.EntityTypeConfigs
 {
@@ -8,14 +8,9 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder
-                .ToTable("users")
-                .HasKey(u => u.Id);
+            builder.ToTable("users").HasKey(u => u.Id);
 
-            builder
-                .Property(u => u.Id)
-                .HasColumnName("id")
-                .HasColumnType("varchar(100)");
+            builder.Property(u => u.Id).HasColumnName("id").HasColumnType("varchar(100)");
 
             builder
                 .Property(u => u.AccountIds)
@@ -35,14 +30,11 @@ namespace FintechStatsPlatform.Models.EntityTypeConfigs
                 .HasColumnType("timestamp")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            builder
-                .Ignore(u => u.Username);
+            builder.Ignore(u => u.Username);
 
-            builder
-                .Ignore(u => u.Email);
+            builder.Ignore(u => u.Email);
 
-            builder
-                .Ignore(b => b.Mapper);
+            builder.Ignore(b => b.Mapper);
         }
     }
 }
