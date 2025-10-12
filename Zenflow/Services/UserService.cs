@@ -1,6 +1,6 @@
 ﻿using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using static FintechStatsPlatform.Exceptions.ExceptionTypes;
+using static Zenflow.Helpers.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {

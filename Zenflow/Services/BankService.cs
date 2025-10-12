@@ -6,7 +6,7 @@ using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
 using Zenflow.Helpers;
-using static FintechStatsPlatform.Exceptions.ExceptionTypes;
+using static Zenflow.Helpers.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {

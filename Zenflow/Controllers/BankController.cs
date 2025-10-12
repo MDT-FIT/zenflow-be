@@ -1,5 +1,4 @@
-﻿using FintechStatsPlatform.Exceptions;
-using FintechStatsPlatform.Filters;
+﻿using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
