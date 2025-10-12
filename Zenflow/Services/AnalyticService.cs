@@ -47,37 +47,46 @@ namespace FintechStatsPlatform.Services
             tFilter2.DateFrom = lastMonthDateFrom;
             tFilter2.DateTo = lastMonthDateTo;
 
-            // Get transactions for the current period and 30-days-period before
-            var currentExpensesRetrieval = _bankService.ListTransactionsAsync(tFilter1, userAccessToken);
-            var lastMonthExpensesRetrieval = _bankService.ListTransactionsAsync(tFilter2, userAccessToken);
+            int? minAmount = isExpenses ? null : 0;
+            int? maxAmount = isExpenses ? 0 : null;
 
+            // Get transactions for the current period and 30-days-period before
+            var currentExpensesRetrieval = _bankService.ListTransactionsAsync(tFilter1, userAccessToken, minAmount, maxAmount);
+            var lastMonthExpensesRetrieval = _bankService.ListTransactionsAsync(tFilter2, userAccessToken, minAmount, maxAmount);
             await Task.WhenAll(currentExpensesRetrieval, lastMonthExpensesRetrieval); // Wait for both operations to complete
 
             // Get the resulting transactions
-            var currentExpenses = currentExpensesRetrieval.Result.Where(t => isExpenses ? t.Amount < 0 : t.Amount > 0).ToArray();
-            var lastMonthExpenses = lastMonthExpensesRetrieval.Result.Where(t => isExpenses ? t.Amount < 0 : t.Amount > 0).ToArray();
+            var currentExpenses = currentExpensesRetrieval.Result;
+            var lastMonthExpenses = lastMonthExpensesRetrieval.Result;
 
             long currentAmount = Math.Abs(currentExpenses.Sum(t => t.Amount));
             long lastMonthAmount = Math.Abs(lastMonthExpenses.Sum(t => t.Amount));
 
-            int scale = 0;
-            string currency = string.Empty;
-
             // Assume for now that scale and currency are the same throughout all transactions 
-            if (currentExpenses.Length > 0)
-            {
-                scale = currentExpenses[0].Scale;
-                currency = currentExpenses[0].Currency;
-            }
-            else if (lastMonthExpenses.Length > 0)
-            {
-                scale = lastMonthExpenses[0].Scale;
-                currency = lastMonthExpenses[0].Currency;
-            }
+            (int scale, string currency) = GetCurrencyAndScale(currentExpenses, lastMonthExpenses);
 
             double changePercentage = Math.Round(CalculateChangePercentage(currentAmount, lastMonthAmount), 2);
 
             return new Stats(filter.UserId, [.. filter.AccountIds], currentAmount, scale, currency, changePercentage);
+        }
+
+        private (int, string) GetCurrencyAndScale(List<TinkTransaction> current, List<TinkTransaction> prev)
+        {
+            int scale = 0;
+            string currency = string.Empty;
+
+            if (current.Count > 0)
+            {
+                scale = current[0].Scale;
+                currency = current[0].Currency;
+            }
+            else if (prev.Count > 0)
+            {
+                scale = prev[0].Scale;
+                currency = prev[0].Currency;
+            }
+
+            return (scale, currency);
         }
 
         private double CalculateChangePercentage(long current, long prev)
