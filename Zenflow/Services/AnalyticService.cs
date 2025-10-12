@@ -103,7 +103,18 @@ namespace FintechStatsPlatform.Services
             var tFilter = filter.ToTransactionFilter();
 
             var transactions = await _bankService.ListTransactionsAsync(tFilter, userAccessToken);
+
+            foreach (var transaction in transactions)
+            {
+                Console.WriteLine(transaction.AccountId);
+            }
+
             var mostUsedAccountId = transactions?.GroupBy(t => t.AccountId)?.MaxBy(g => g.Count())?.Key;
+
+            if (string.IsNullOrEmpty(mostUsedAccountId))
+            {
+                return new TinkCardResponse();
+            }
 
             var requestMessage = new HttpRequestMessage
             {
@@ -120,6 +131,9 @@ namespace FintechStatsPlatform.Services
             response.EnsureSuccessStatusCode();
 
             var content = await response.Content.ReadAsStringAsync();
+
+            Console.WriteLine("Raw account response form tink");
+            Console.WriteLine(content);
 
             var mostUsedCard = JsonSerializer.Deserialize<TinkCardResponse>(content, new JsonSerializerOptions
             {

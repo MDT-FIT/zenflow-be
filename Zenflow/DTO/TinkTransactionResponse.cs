@@ -45,7 +45,7 @@ namespace FintechStatsPlatform.DTO
         public string AccountId { get; init; }
         
         public string UserId { get; set; }
-
+        
         public long Amount
         {
             get

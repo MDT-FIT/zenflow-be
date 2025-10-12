@@ -133,6 +133,41 @@ namespace FintechStatsPlatform.Controllers
                 return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
             }
         }
+
+        [HttpPost("stats/top-card")]
+        public async Task<ActionResult> GetTopCard([FromBody] StatsFilter filter)
+        {
+            if (filter == null || filter.UserId is null) return BadRequest();
+
+            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is invalid or expired");
+            }
+
+            try
+            {
+                var card = await _analyticService.getMostUsedCard(filter, token);
+                return Ok(card);
+            }
+            catch (ExceptionTypes.JsonParsingException jsonEx)
+            {
+                return StatusCode(500, jsonEx.Message);
+            }
+            catch (ExceptionTypes.ExternalApiException apiEx)
+            {
+                return StatusCode(500, apiEx.Message);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
+            }
+        }
         
         [HttpGet("balances")]
         public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
