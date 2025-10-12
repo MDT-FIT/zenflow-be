@@ -4,6 +4,7 @@ using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using FintechStatsPlatform.Exceptions;
+using Zenflow.Env;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using FintechStatsPlatform.Helpers;
 
@@ -18,15 +19,15 @@ namespace FintechStatsPlatform.Controllers
         private readonly AnalyticService _analyticService = analyticService;
 
         [HttpGet("bank-configs/{userId}")]
-		public IActionResult ListBankConfigs([FromRoute] string userId)
-		{
+        public IActionResult ListBankConfigs([FromRoute] string userId)
+        {
             try
             {
                 List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
                 return Ok(allUserConfigs);
             }
-            catch (ExceptionTypes.NotFoundException ex) 
-            { 
+            catch (ExceptionTypes.NotFoundException ex)
+            {
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
@@ -34,15 +35,15 @@ namespace FintechStatsPlatform.Controllers
                 Console.WriteLine($"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex.ToString()}");
                 return BadRequest("Something went wrong");
             }
-			
-		}
+
+        }
 
         [HttpPost("transactions")]
         public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
         {
             if (filter == null || filter.UserId is null) return BadRequest();
 
-            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+            string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
 
             if (string.IsNullOrEmpty(token))
             {
@@ -51,14 +52,14 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var transactions = await _banksService.ListTransactionsAsync(filter, token);
+                var transactions = await _banksService.ListTransactionsAsync(filter, token).ConfigureAwait(false);
                 return Ok(transactions);
             }
             catch (HttpRequestException ex)
             {
                 return StatusCode(502, ex.Message);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
             }
@@ -149,13 +150,13 @@ namespace FintechStatsPlatform.Controllers
         public async Task<IActionResult> GetBalances([FromQuery] List<string> accountIds, [FromQuery] string userId)
 
         {
-            if (accountIds.Equals(null) || !accountIds.Any())
+            if (accountIds.Equals(null) || accountIds.Count == 0)
                 return BadRequest(new { message = "At least one accountId is required." });
 
             if (userId == null)
-                return BadRequest(new { message = "User is required"});
+                return BadRequest(new { message = "User is required" });
 
-            string token = HttpContext.Request.Cookies[_tinkJwtTokenKey] ?? "";
+            string token = HttpContext.Request.Cookies[EnvConfig.TinkJwt] ?? "";
 
             try
             {
@@ -169,14 +170,14 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var balances = await _banksService.GetBalancesAsync(accountIds, token, userId);
+                var balances = await _banksService.GetBalancesAsync(accountIds, token, userId).ConfigureAwait(false);
                 return Ok(balances);
             }
-            catch (ExceptionTypes.JsonParsingException jsonEx) 
+            catch (ExceptionTypes.JsonParsingException jsonEx)
             {
                 return StatusCode(500, jsonEx.Message);
             }
-            catch (ExceptionTypes.ExternalApiException apiEx) 
+            catch (ExceptionTypes.ExternalApiException apiEx)
             {
                 return StatusCode(500, apiEx.Message);
             }
@@ -238,8 +239,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutBank(string id, BankConfig bank)
         {
-            var success = await _banksService.UpdateBankAsync(id, bank).ConfigureAwait(false);
-            if (!success) return NotFound();
+            await _banksService.UpdateBankAsync(id, bank).ConfigureAwait(false);
             return NoContent();
         }
 

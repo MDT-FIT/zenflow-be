@@ -1,10 +1,18 @@
 ﻿using FintechStatsPlatform.Enumirators;
+using System.Xml.Linq;
 
 namespace FintechStatsPlatform.Models
 {
     public class BankConfig : AbstractEntity
     {
-        public BankConfig() { }
+        public BankConfig()
+        {
+            ApiLink = "";
+            Currency = "";
+            Logo = "";
+            Name = BankName.OTHER;
+            IsEnabled = false;
+        }
         public BankConfig(BankName name = BankName.OTHER, string apiLink = "", string currency = "", string logo = "", bool isEnabled = false)
         {
             ApiLink = apiLink;

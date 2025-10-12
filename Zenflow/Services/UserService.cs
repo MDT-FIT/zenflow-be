@@ -1,5 +1,6 @@
 ﻿using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
+using static FintechStatsPlatform.Exceptions.ExceptionTypes;
 
 namespace FintechStatsPlatform.Services
 {
@@ -17,7 +18,7 @@ namespace FintechStatsPlatform.Services
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase)).ConfigureAwait(false);
 
             if (user == null)
-                throw new Exception("User not found");
+                throw new UserNotFoundException("user", email);
 
             return user;
         }
@@ -39,7 +40,7 @@ namespace FintechStatsPlatform.Services
             _context.Entry(user).State = EntityState.Modified;
             try
             {
-                await _context.SaveChangesAsync().ConfigureAwait(false);;
+                await _context.SaveChangesAsync().ConfigureAwait(false); ;
             }
             catch (DbUpdateConcurrencyException)
             {

@@ -6,9 +6,9 @@ namespace FintechStatsPlatform.Models
     public class FintechContext(DbContextOptions<FintechContext> options)
         : DbContext(options)
     {
-        public virtual DbSet<User> Users { get; set; }
-        public virtual DbSet<BankConfig> Banks { get; set; }
-        public virtual DbSet<BankAccount> BankAccounts { get; set; }
+        public virtual required DbSet<User> Users { get; set; }
+        public virtual required DbSet<BankConfig> Banks { get; set; }
+        public virtual required DbSet<BankAccount> BankAccounts { get; set; }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
     "Design",

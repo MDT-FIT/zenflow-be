@@ -9,17 +9,17 @@ namespace FintechStatsPlatform.DTO
 {
     public class TinkTransactionResponse
     {
-        public List<TinkResult> Results { get; set; }
+        public required List<TinkResult> Results { get; set; }
     }
 
     public class TinkResult
     {
-        public TinkTransaction Transaction { get; set; }
+        public required TinkTransaction Transaction { get; set; }
     }
 
     public class TinkOriginalAmount
     {
-        public string CurrencyCode { get; set; }
+        public required string CurrencyCode { get; set; }
         public int Scale { get; set; }
         public long UnscaledValue { get; set; }
     }
@@ -27,19 +27,19 @@ namespace FintechStatsPlatform.DTO
     public class TinkTransaction
     {
         [JsonPropertyName("type")]
-        public string CategoryTypeString { private get; init; }
+        public required string CategoryTypeString { private get; init; }
 
         [JsonPropertyName("date")]
         public long DateUnixEpoch { private get; init; }
 
         [JsonPropertyName("currencyDenominatedOriginalAmount")]
-        public TinkOriginalAmount OriginalAmount { private get; init; }
+        public required TinkOriginalAmount OriginalAmount { private get; init; }
 
         [JsonPropertyName("pending")]
         public bool Pending { private get; init; }
 
         [JsonPropertyName("id")]
-        public string Id { get; init; }
+        public required string Id { get; init; }
 
         [JsonPropertyName("accountId")]
         public string AccountId { get; init; }

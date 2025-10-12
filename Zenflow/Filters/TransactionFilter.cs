@@ -14,9 +14,9 @@ namespace FintechStatsPlatform.Filters
         {
             var sb = new StringBuilder();
 
-            if (accountIds != null && accountIds.Length != 0)
+            if (AccountIds != null && AccountIds.Count != 0)
             {
-                foreach (var accountId in accountIds)
+                foreach (var accountId in AccountIds)
                 {
                     sb.Append($"accounts={accountId}&");
                 }

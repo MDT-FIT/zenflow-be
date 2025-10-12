@@ -25,7 +25,7 @@ namespace FintechStatsPlatform.Models
 
         public Card getCardInfo(string cardNumber, BankName bank)
         {
-            return Cards.Find(card => String.Concat(card.CardBin, card.LastFour).Equals(cardNumber));
+            return Cards.Find(card => String.Concat(card.CardBin, card.LastFour).Equals(cardNumber, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
