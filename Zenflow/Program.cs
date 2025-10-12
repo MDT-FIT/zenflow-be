@@ -55,6 +55,13 @@ namespace FintechStatsPlatform
 
                 return new AuthService(httpClient, configuration);
             });
+            builder.Services.AddScoped(provider =>
+            {
+                var bankService = provider.GetRequiredService<BankService>();
+                var httpClient = provider.GetRequiredService<HttpClient>();
+
+                return new AnalyticService(bankService, httpClient);
+            });
 
             // JWT Authentication для Auth0
             var domain = builder.Configuration["Auth0:Domain"];

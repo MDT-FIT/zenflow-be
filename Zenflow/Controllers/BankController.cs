@@ -4,15 +4,18 @@ using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using FintechStatsPlatform.Exceptions;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using FintechStatsPlatform.Helpers;
 
 
 namespace FintechStatsPlatform.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
-	public class BankController(BankService banksService) : ControllerBase
+	public class BankController(BankService banksService, AnalyticService analyticService) : ControllerBase
 	{
 		private readonly BankService _banksService = banksService;
+        private readonly AnalyticService _analyticService = analyticService;
         private readonly string _tinkJwtTokenKey = Environment.GetEnvironmentVariable("TINK_JWT_TOKEN") ?? "other_bank_token";
 
         [HttpGet("bank-configs/{userId}")]
@@ -35,11 +38,10 @@ namespace FintechStatsPlatform.Controllers
 			
 		}
 
-
         [HttpPost("transactions")]
         public async Task<ActionResult> ListTransactions([FromBody] TransactionFilter filter)
         {
-            if (filter is null || filter.UserId is null) return BadRequest();
+            if (filter == null || filter.UserId is null) return BadRequest();
 
             string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
 
@@ -60,6 +62,87 @@ namespace FintechStatsPlatform.Controllers
             catch(Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpPost("stats/expenses")]
+        public async Task<ActionResult> GetExpensesStats([FromBody] StatsFilter filter)
+        {
+            return await StatsEndPointBase(_analyticService.GetExpensesAsync, filter, "expenses");
+        }
+
+        [HttpPost("stats/income")]
+        public async Task<ActionResult> GetIncomeStats([FromBody] StatsFilter filter)
+        {
+            return await StatsEndPointBase(_analyticService.GetIncomeAsync, filter, "income");
+        }
+
+        private async Task<ActionResult> StatsEndPointBase(Func<StatsFilter, string, Task<Stats>> getOperation, StatsFilter filter, string typeName)
+        {
+            if (filter == null || filter.UserId is null) return BadRequest();
+
+            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is invalid or expired");
+            }
+
+            try
+            {
+                var stats = await getOperation(filter, token);
+                return Ok(stats);
+            }
+            catch (ExceptionTypes.JsonParsingException jsonEx)
+            {
+                return StatusCode(500, jsonEx.Message);
+            }
+            catch (ExceptionTypes.ExternalApiException apiEx)
+            {
+                return StatusCode(500, apiEx.Message);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to get {typeName}: {ex.Message}" });
+            }
+        }
+
+        [HttpPost("stats/top-card")]
+        public async Task<ActionResult> GetTopCard([FromBody] StatsFilter filter)
+        {
+            if (filter == null || filter.UserId is null) return BadRequest();
+
+            string? token = HttpContext.Request.Cookies[_tinkJwtTokenKey];
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized("Token is invalid or expired");
+            }
+
+            try
+            {
+                var card = await _analyticService.GetMostUsedCardAsync(filter, token);
+                return Ok(card);
+            }
+            catch (ExceptionTypes.JsonParsingException jsonEx)
+            {
+                return StatusCode(500, jsonEx.Message);
+            }
+            catch (ExceptionTypes.ExternalApiException apiEx)
+            {
+                return StatusCode(500, apiEx.Message);
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return StatusCode(502, new { message = $"Tink API request failed: {httpEx.Message}" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Failed to get expenses: {ex.Message}" });
             }
         }
         
@@ -117,12 +200,7 @@ namespace FintechStatsPlatform.Controllers
 			{
 				var token = _banksService.GetTinkAccessToken(code);
 
-				HttpContext.Response.Cookies.Append(_tinkJwtTokenKey,token,new CookieOptions {
-					HttpOnly = true,
-					Secure = true,
-					SameSite = SameSiteMode.Strict,
-					Expires = DateTimeOffset.UtcNow.AddHours(1)
-				});
+				HttpContext.Response.Cookies.Append(_tinkJwtTokenKey,token, CookieConfig.Default);
 
 				await _banksService.ConnectOtherBankAsync(userId, token);
 
