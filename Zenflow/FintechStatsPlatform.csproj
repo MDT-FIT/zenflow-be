@@ -4,6 +4,15 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+	  <PackageId>FintechStatsPlatform</PackageId>
+	  <Version>1.0.0</Version>
+	  <Authors>MDT-FIT</Authors>
+	  <Company>MDT-FIT</Company>
+	  <Description>Fintech Statistics Platform - Web API</Description>
+	  <PackageProjectUrl>https://github.com/MDT-FIT/fintech-stats-platform</PackageProjectUrl>
+	  <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	  <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
