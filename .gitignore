@@ -1,4 +1,8 @@
-# Build results
+# Ignore Visual Studio workspace files
+.vs/
+.vscode/
+
+# Ignore build output folders
 **/bin/
 **/obj/
 
@@ -7,10 +11,6 @@
 *.suo
 *.userosscache
 *.sln.docstates
-
-# Visual Studio
-.vs/
-.vscode/
 
 # Rider
 .idea/
