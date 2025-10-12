@@ -6,6 +6,10 @@
 **/bin/
 **/obj/
 
+# Ignore all bin and obj folders recursively
+bin/
+obj/
+
 # User-specific files
 *.user
 *.suo
