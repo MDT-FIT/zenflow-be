@@ -25,12 +25,12 @@ namespace FintechStatsPlatform.Services
             _httpClient = httpClient;
         }
 
-        public async Task<Stats> getExpensesAsync(StatsFilter filter, string userAccessToken)
+        public async Task<Stats> GetExpensesAsync(StatsFilter filter, string userAccessToken)
         {
             return await GetTypedTransactions(filter, userAccessToken);
         }
 
-        public async Task<Stats> getIncome(StatsFilter filter, string userAccessToken)
+        public async Task<Stats> GetIncomeAsync(StatsFilter filter, string userAccessToken)
         {
             return await GetTypedTransactions(filter, userAccessToken, false);
         }
@@ -107,7 +107,7 @@ namespace FintechStatsPlatform.Services
             return (double)(current - prev) / prev * 100;
         }
 
-        public async Task<TinkCardResponse> getMostUsedCard(StatsFilter filter, string userAccessToken)
+        public async Task<TinkCardResponse> GetMostUsedCardAsync(StatsFilter filter, string userAccessToken)
         {
             var tFilter = filter.ToTransactionFilter();
 
