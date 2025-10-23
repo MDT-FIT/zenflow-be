@@ -224,15 +224,7 @@ namespace FintechStatsPlatform.Services
             var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             using var doc = JsonDocument.Parse(content);
 
-            var available = doc.RootElement.GetProperty("balances").GetProperty("available");
-
-            return new Balance(
-                userId,
-                available.GetProperty("unscaledValue").GetInt64(),
-                available.GetProperty("scale").GetInt32(),
-                doc.RootElement.GetProperty("accountId").GetString() ?? "",
-                available.GetProperty("currencyCode").GetString() ?? ""
-            );
+            return Balance.FromTinkJson(content, userId);
         }
 
         public void ConnectMono()
@@ -264,41 +256,12 @@ namespace FintechStatsPlatform.Services
 
             foreach (var account in accountsJson.EnumerateArray())
             {
-                var id = account.GetProperty("id").GetString();
-                var fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
-
-                try
-                {
-                    var amount = account
-                        .GetProperty("balances")
-                        .GetProperty("booked")
-                        .GetProperty("amount")
-                        .GetProperty("value");
-
-                    var unscaled = long.Parse(
-                        amount.GetProperty("unscaledValue").GetString() ?? ""
-                    );
-                    var scale = int.Parse(amount.GetProperty("scale").GetString() ?? "");
-                    var balance = unscaled * (long)Math.Pow(10, -scale);
-
-                    userAccounts.Add(
-                        new BankAccount
-                        {
-                            Id = fullBankId,
-                            UserId = userId,
-                            BankId = bank.Id ?? throw new BankNotFoundException("id"),
-                            Balance = balance,
-                            CurrencyScale = scale,
-                        }
-                    );
-                }
-                catch (Exception ex)
-                {
-                    throw new UnexpectedException(
-                        "Error while parsing account balance",
-                        (CustomException)ex
-                    );
-                }
+                var bankAccount = BankAccount.CreateFromTinkJson
+                (
+                    account,
+                    userId,
+                    bank.Id ?? throw new ArgumentException($"There isn't bankId for bank {bank.Name}")
+                );
             }
 
             await _context.BankAccounts.AddRangeAsync(userAccounts).ConfigureAwait(false);
