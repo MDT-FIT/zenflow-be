@@ -1,4 +1,8 @@
-﻿namespace FintechStatsPlatform.Models
+﻿using FintechStatsPlatform.Enumirators;
+using System.Text.Json;
+using static Zenflow.Helpers.ExceptionTypes;
+
+namespace FintechStatsPlatform.Models
 {
     public class BankAccount : AbstractEntity
     {
@@ -8,5 +12,41 @@
         public long Balance { get; set; }
         public User? User { get; set; }
         public BankConfig? Bank { get; set; }
+
+        public static BankAccount CreateFromTinkJson(JsonElement accountJson, string userId, string bankId)
+        {
+            try
+            {
+                var id = accountJson.GetProperty("id").GetString();
+                var fullBankId = BankNameMapper.BankNameToIdMap[BankName.OTHER] + id;
+                var amount = accountJson
+                    .GetProperty("balances")
+                    .GetProperty("booked")
+                    .GetProperty("amount")
+                    .GetProperty("value");
+
+                var unscaled = long.Parse(
+                    amount.GetProperty("unscaledValue").GetString() ?? ""
+                );
+                var scale = int.Parse(amount.GetProperty("scale").GetString() ?? "");
+                var balance = unscaled * (long)Math.Pow(10, -scale);
+
+                return new BankAccount
+                {
+                    Id = fullBankId,
+                    UserId = userId,
+                    BankId = bankId,
+                    Balance = balance,
+                    CurrencyScale = scale,
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new UnexpectedException(
+                    "Error while parsing account balance",
+                     (CustomException)ex
+                );
+            }
+        }
     }
 }
