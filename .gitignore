@@ -68,3 +68,5 @@ Generated_Code/
 
 # Ignore build cache
 artifacts/
+
+/.vagrant
