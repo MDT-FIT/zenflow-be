@@ -1,4 +1,5 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using Asp.Versioning;
+using System.IdentityModel.Tokens.Jwt;
 using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
@@ -11,7 +12,9 @@ using Zenflow.Helpers;
 namespace FintechStatsPlatform.Controllers
 {
     [ApiController]
-    [Route("api/zenflow/[controller]")]
+    [Route("api/zenflow/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")] 
+    [ApiVersion("2.0")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;

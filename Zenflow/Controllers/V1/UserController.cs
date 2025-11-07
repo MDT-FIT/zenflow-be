@@ -1,11 +1,13 @@
-﻿using FintechStatsPlatform.Models;
+﻿using Asp.Versioning;
+using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FintechStatsPlatform.Controllers
+namespace Zenflow.Controllers.V1
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")]
     public class UserController : ControllerBase
     {
         private readonly UserService _userService;
