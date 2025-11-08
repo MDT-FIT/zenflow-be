@@ -1,7 +1,7 @@
 name: .NET Core XUnit Tests
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "DEV-24" ] # Я додав вашу гілку DEV-24, щоб це спрацювало
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
@@ -27,3 +27,19 @@ jobs:
 
     - name: Run XUnit Tests
       run: dotnet test Zenflow.Tests --configuration Release --no-build --verbosity normal
+      env:
+        TINK_CLIENT_ID: ${{ secrets.TINK_CLIENT_ID }}
+        TINK_CLIENT_SECRET: ${{ secrets.TINK_CLIENT_SECRET }}
+        TINK_API_LINK: ${{ secrets.TINK_API_LINK }}
+        TINK_JWT_TOKEN: ${{ secrets.TINK_JWT_TOKEN }}
+        TINK_GRANT_TYPE: ${{ secrets.TINK_GRANT_TYPE }}
+
+        AUTH_JWT_TOKEN: ${{ secrets.AUTH_JWT_TOKEN }}
+        AUTH_DOMAIN: ${{ secrets.AUTH_DOMAIN }}
+        AUTH_CLIENT_ID: ${{ secrets.AUTH_CLIENT_ID }}
+        AUTH_CLIENT_SECRET: ${{ secrets.AUTH_CLIENT_SECRET }}
+        AUTH_AUDIENCE: ${{ secrets.AUTH_AUDIENCE }}
+        AUTH_CONNECTION_NAME: ${{ secrets.AUTH_CONNECTION_NAME }}
+        AUTH_GRANT_TYPE: ${{ secrets.AUTH_GRANT_TYPE }}
+
+        DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
