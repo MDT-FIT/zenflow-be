@@ -146,27 +146,26 @@ namespace FintechStatsPlatform
             });
 
             var app = builder.Build();
-
-            // Configure the HTTP request pipeline
+           // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI(options =>
-                {
-                    // Get service that knows about every version of API
-                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+              app.UseSwagger();
+              app.UseSwaggerUI(options =>
+              {
+                  // Get service that knows about every version of API
+                  var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
-                    // Create one endpoint in Swagger UI for each version
-                    foreach (var description in provider.ApiVersionDescriptions)
-                    {
-                        options.SwaggerEndpoint(
-                            $"/swagger/{description.GroupName}/swagger.json", // Route to the file
-                            description.GroupName.ToUpperInvariant()
-                        );
-                    }
-                });
+                  // Create one endpoint in Swagger UI for each version
+                  foreach (var description in provider.ApiVersionDescriptions)
+                  {
+                      options.SwaggerEndpoint(
+                          $"/swagger/{description.GroupName}/swagger.json", // Route to the file
+                          description.GroupName.ToUpperInvariant()
+                      );
+                  }
+              });
             }
-
+          
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAll");
