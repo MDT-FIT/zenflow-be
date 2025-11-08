@@ -13,6 +13,7 @@ namespace Zenflow.Tests
 {
     public class ApiIntegrationTests : IAsyncLifetime
     {
+        // Added some tests
         private PostgreSqlContainer _dbContainer;
         private ApiWebApplicationFactory _factory;
         private HttpClient _client;
