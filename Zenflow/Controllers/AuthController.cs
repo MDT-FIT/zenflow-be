@@ -1,12 +1,13 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using FintechStatsPlatform.DTO;
+﻿using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 using Zenflow.Helpers;
+using static Zenflow.Helpers.ExceptionTypes;
 
 namespace FintechStatsPlatform.Controllers
 {
@@ -71,7 +72,14 @@ namespace FintechStatsPlatform.Controllers
                 HttpContext.Response.Cookies.Append(
                     EnvConfig.AuthJwt,
                     tokenResponse.AccessToken ?? "",
-                    CookieConfig.Default
+                    CookieConfig.Default()
+                );
+
+
+                HttpContext.Response.Cookies.Append(
+                     EnvConfig.AuthRefreshJwt,
+                    tokenResponse.RefreshToken ?? "",
+                    CookieConfig.Default()
                 );
 
                 return Ok(
@@ -133,8 +141,15 @@ namespace FintechStatsPlatform.Controllers
                 HttpContext.Response.Cookies.Append(
                     EnvConfig.AuthJwt,
                     tokenResponse.AccessToken ?? "",
-                    CookieConfig.Default
+                    CookieConfig.Default()
                 );
+
+                HttpContext.Response.Cookies.Append(
+              EnvConfig.AuthRefreshJwt,
+              tokenResponse.RefreshToken ?? "",
+              CookieConfig.Default()
+          );
+
 
                 return Ok(
                     new
@@ -164,6 +179,87 @@ namespace FintechStatsPlatform.Controllers
         }
 
         /// <summary>
+        /// Вхід користувача через Auth0
+        /// POST /api/zenflow/auth/get-user
+        /// </summary>
+        [HttpGet("get-user")]
+        public async Task<IActionResult> GetUser()
+        {
+
+            string token = HttpContext.Request.Cookies[EnvConfig.AuthJwt] ?? "";
+            string refreshToken = HttpContext.Request.Cookies[EnvConfig.AuthRefreshJwt] ?? "";
+
+            var isTokenValid = AuthService.ValidateToken(token);
+
+            try
+            {
+                string currentToken = token;
+
+                if (isTokenValid == false)
+                {
+                    var tokenResponse = await _authService
+                   .RefreshTokenAsync(refreshToken)
+                   .ConfigureAwait(false);
+
+                    HttpContext.Response.Cookies.Append(
+               EnvConfig.AuthJwt,
+               tokenResponse.AccessToken ?? "",
+               CookieConfig.Default()
+           );
+
+                    currentToken = tokenResponse.AccessToken ?? "";
+                }
+
+
+                _logger.LogInformation("Attempt to get UserInfo");
+
+                var userInfo = await _authService
+                    .GetUserInfoAsync(currentToken)
+                    .ConfigureAwait(false);
+
+                var user = await _context
+                    .Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub)
+                    .ConfigureAwait(false);
+
+                if (userInfo == null)
+                {
+                    throw new UserNotFoundException();
+                }
+
+                if (user == null)
+                {
+                    user = _authService.ConvertToUser(userInfo);
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync().ConfigureAwait(false);
+                }
+
+                var accountIds = await _context
+                 .BankAccounts.Where(account => account.UserId == user.Id)
+                 .Select(account => account.Id).ToListAsync();
+
+                user.AccountIds = accountIds.Where(account => account != null).Select(account => account!).ToList();
+                var userAggregated = new User(id: user.Id ?? "", username: userInfo.Nickname ?? "", email: userInfo.Email ?? "", accountIds: user.AccountIds);
+
+                await _context.SaveChangesAsync().ConfigureAwait(false);
+
+                return Ok(
+                    new
+                    {
+                        user = userAggregated
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get current user");
+                Console.WriteLine(ex.Message);
+                return Unauthorized(
+                    new { error = "Unable to get current user", message = ex.Message }
+                );
+            }
+        }
+
+        /// <summary>
         /// Оновлення access token через refresh token
         /// POST /api/zenflow/auth/refresh
         /// </summary>
@@ -182,12 +278,20 @@ namespace FintechStatsPlatform.Controllers
                     .RefreshTokenAsync(refreshToken)
                     .ConfigureAwait(false);
 
+                HttpContext.Response.Cookies.Append(
+                  EnvConfig.AuthJwt,
+                  tokenResponse.AccessToken ?? "",
+                  CookieConfig.Default()
+              );
+
+                HttpContext.Response.Cookies.Append(
+                  EnvConfig.AuthRefreshJwt,
+                  tokenResponse.RefreshToken ?? "",
+                  CookieConfig.Default()
+              );
+
+
                 return Ok(
-                    new
-                    {
-                        access_token = tokenResponse.AccessToken,
-                        expires_in = tokenResponse.ExpiresIn,
-                    }
                 );
             }
             catch (Exception ex)
@@ -202,11 +306,11 @@ namespace FintechStatsPlatform.Controllers
         /// Вихід з системи
         /// POST /api/zenflow/auth/log-out
         /// </summary>
-        [Authorize]
         [HttpPost("log-out")]
-        public IActionResult LogOut([FromBody] string accessToken)
+        public IActionResult LogOut()
         {
             HttpContext.Response.Cookies.Delete(EnvConfig.AuthJwt);
+            HttpContext.Response.Cookies.Delete(EnvConfig.AuthRefreshJwt);
 
             return Ok(new { message = "Вихід успішний" });
         }

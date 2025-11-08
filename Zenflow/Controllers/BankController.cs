@@ -1,10 +1,10 @@
-﻿using FintechStatsPlatform.Filters;
+﻿using FintechStatsPlatform.Enumirators;
+using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Zenflow.Helpers;
 
 namespace FintechStatsPlatform.Controllers
@@ -19,11 +19,32 @@ namespace FintechStatsPlatform.Controllers
         private readonly AnalyticService _analyticService = analyticService;
 
         [HttpGet("bank-configs/{userId}")]
-        public IActionResult ListBankConfigs([FromRoute] string userId)
+        public async Task<IActionResult> ListBankConfigs([FromRoute] string userId)
         {
             try
             {
+                string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
+
+                if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+                {
+                    (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                    clientToken = clientNewToken;
+                    HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+                }
+
+
+                string link = await _banksService.GetTinkLink(userId, clientToken);
+
                 List<BankConfig> allUserConfigs = _banksService.ListBankConfigs(userId);
+
+
+                BankConfig? otherBankConfig = allUserConfigs.FirstOrDefault(config => config.Name == BankName.OTHER);
+
+                if (otherBankConfig != null)
+                {
+                    otherBankConfig.ApiLink = link;
+                }
+
                 return Ok(allUserConfigs);
             }
             catch (ExceptionTypes.NotFoundException ex)
@@ -33,7 +54,7 @@ namespace FintechStatsPlatform.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine(
-                    $"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex.ToString()}"
+                    $"Untrackable exception occured while attempt of getting user's {userId} list of BankConfigs:\n{ex}"
                 );
                 return BadRequest("Something went wrong");
             }
@@ -45,7 +66,26 @@ namespace FintechStatsPlatform.Controllers
             if (filter == null || filter.UserId is null)
                 return BadRequest();
 
-            string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
+            string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
+            string token = HttpContext.Request.Cookies[EnvConfig.TinkJwt] ?? "";
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+            {
+                (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                clientToken = clientNewToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+            }
+
+
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkJwt] == null)
+            {
+                (string newToken, double expires) = await _banksService.GetTinkUserAccessToken(filter.UserId, clientToken);
+                token = newToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, newToken, CookieConfig.Default(expires));
+            }
+
+
 
             if (string.IsNullOrEmpty(token))
             {
@@ -54,7 +94,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var transactions = await _banksService
+                List<DTO.TinkTransaction> transactions = await _banksService
                     .ListTransactionsAsync(filter, token)
                     .ConfigureAwait(false);
                 return Ok(transactions);
@@ -92,7 +132,24 @@ namespace FintechStatsPlatform.Controllers
             if (filter == null || filter.UserId is null)
                 return BadRequest();
 
-            string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
+            string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
+            string token = HttpContext.Request.Cookies[EnvConfig.TinkJwt] ?? "";
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+            {
+                (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                clientToken = clientNewToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+            }
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkJwt] == null)
+            {
+                (string newToken, double expires) = await _banksService.GetTinkUserAccessToken(filter.UserId, clientToken);
+                token = newToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, newToken, CookieConfig.Default(expires));
+            }
+
+
 
             if (string.IsNullOrEmpty(token))
             {
@@ -101,7 +158,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var stats = await getOperation(filter, token).ConfigureAwait(false);
+                Stats stats = await getOperation(filter, token).ConfigureAwait(false);
                 return Ok(stats);
             }
             catch (ExceptionTypes.JsonParsingException jsonEx)
@@ -131,7 +188,26 @@ namespace FintechStatsPlatform.Controllers
             if (filter == null || filter.UserId is null)
                 return BadRequest();
 
-            string? token = HttpContext.Request.Cookies[EnvConfig.TinkJwt];
+            string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
+            string token = HttpContext.Request.Cookies[EnvConfig.TinkJwt] ?? "";
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+            {
+                (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                clientToken = clientNewToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+            }
+
+
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkJwt] == null)
+            {
+                (string newToken, double expires) = await _banksService.GetTinkUserAccessToken(filter.UserId, clientToken);
+                token = newToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, newToken, CookieConfig.Default(expires));
+            }
+
+
 
             if (string.IsNullOrEmpty(token))
             {
@@ -140,7 +216,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var card = await _analyticService
+                DTO.TinkCardResponse card = await _analyticService
                     .GetMostUsedCardAsync(filter, token)
                     .ConfigureAwait(false);
                 return Ok(card);
@@ -178,7 +254,22 @@ namespace FintechStatsPlatform.Controllers
             if (userId == null)
                 return BadRequest(new { message = "User is required" });
 
+            string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
             string token = HttpContext.Request.Cookies[EnvConfig.TinkJwt] ?? "";
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+            {
+                (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                clientToken = clientNewToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+            }
+
+            if (HttpContext.Request.Cookies[EnvConfig.TinkJwt] == null)
+            {
+                (string newToken, double expires) = await _banksService.GetTinkUserAccessToken(userId, clientToken);
+                token = newToken;
+                HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, newToken, CookieConfig.Default(expires));
+            }
 
             try
             {
@@ -192,7 +283,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var balances = await _banksService
+                List<Balance> balances = await _banksService
                     .GetBalancesAsync(accountIds, token, userId)
                     .ConfigureAwait(false);
                 return Ok(balances);
@@ -218,14 +309,64 @@ namespace FintechStatsPlatform.Controllers
             }
         }
 
-        [HttpPost("connect/other-bank/{code}")]
-        public async Task<IActionResult> ConnectOtherBank(string userId, [FromRoute] string code)
+        [HttpGet("connect/other-bank/get-link")]
+        public async Task<IActionResult> GetLinkOtherBank([FromQuery] string userId)
         {
             try
             {
-                var token = _banksService.GetTinkAccessToken(code);
+                // Client credentials token (for app-level auth)
 
-                HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, token, CookieConfig.Default);
+                string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
+
+                if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+                {
+                    (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                    clientToken = clientNewToken;
+                    HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+                }
+
+
+                string link = await _banksService.GetTinkLink(userId, clientToken);
+
+                return Ok(new
+                {
+                    link
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(
+                    500,
+                    new { error = "Внутрішня помилка сервера", details = ex.Message }
+                );
+            }
+        }
+
+        [HttpPost("connect/other-bank")]
+        public async Task<IActionResult> ConnectOtherBank([FromQuery] string userId)
+        {
+            try
+            {
+                string clientToken = HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] ?? "";
+                string token = HttpContext.Request.Cookies[EnvConfig.TinkJwt] ?? "";
+
+                if (HttpContext.Request.Cookies[EnvConfig.TinkClientJwt] == null)
+                {
+                    (string clientNewToken, double expires) = await _banksService.GetTinkClientToken();
+                    clientToken = clientNewToken;
+                    HttpContext.Response.Cookies.Append(EnvConfig.TinkClientJwt, clientNewToken, CookieConfig.Default(expires));
+                }
+
+
+
+                if (HttpContext.Request.Cookies[EnvConfig.TinkJwt] == null)
+                {
+                    (string newToken, double expires) = await _banksService.GetTinkUserAccessToken(userId, clientToken);
+                    token = newToken;
+                    HttpContext.Response.Cookies.Append(EnvConfig.TinkJwt, newToken, CookieConfig.Default(expires));
+                }
+
+
 
                 await _banksService.ConnectOtherBankAsync(userId, token).ConfigureAwait(false);
 
@@ -251,7 +392,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BankConfig>>> GetBanks()
         {
-            var banks = await _banksService.GetBanksAsync().ConfigureAwait(false);
+            List<BankConfig> banks = await _banksService.GetBanksAsync().ConfigureAwait(false);
             return Ok(banks);
         }
 
@@ -259,7 +400,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<BankConfig>> GetBank(string id)
         {
-            var bank = await _banksService.GetBankByIdAsync(id).ConfigureAwait(false);
+            BankConfig bank = await _banksService.GetBankByIdAsync(id).ConfigureAwait(false);
             if (bank == null)
                 return NotFound();
             return Ok(bank);
@@ -279,7 +420,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost]
         public async Task<ActionResult<BankConfig>> PostBank(BankConfig bank)
         {
-            var createdBank = await _banksService.AddBankAsync(bank).ConfigureAwait(false);
+            BankConfig createdBank = await _banksService.AddBankAsync(bank).ConfigureAwait(false);
             return CreatedAtAction(nameof(GetBank), new { id = createdBank.Id }, createdBank);
         }
 
@@ -287,7 +428,7 @@ namespace FintechStatsPlatform.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBank(string id)
         {
-            var success = await _banksService.DeleteBankAsync(id).ConfigureAwait(false);
+            bool success = await _banksService.DeleteBankAsync(id).ConfigureAwait(false);
             if (!success)
                 return NotFound();
             return NoContent();

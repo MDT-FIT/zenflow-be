@@ -1,7 +1,9 @@
-﻿using System.Text;
+﻿using FintechStatsPlatform.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FintechStatsPlatform.Models;
 using Zenflow.Helpers;
 using static Zenflow.Helpers.ExceptionTypes;
 
@@ -53,6 +55,25 @@ namespace FintechStatsPlatform.Services
         public AuthService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+        }
+        public static bool ValidateToken(string token)
+        {
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateLifetime = true,
+            };
+
+            var handler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                handler.ValidateToken(token, validationParameters, out _);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -208,7 +229,9 @@ namespace FintechStatsPlatform.Services
         /// </summary>
         public User ConvertToUser(Auth0UserInfo userInfo, string forceId = "")
         {
-            return new User(id: forceId ?? userInfo.Sub ?? "");
+            var id = userInfo.Sub ?? "";
+
+            return new User(id: forceId.Length != 0 ? forceId : id, email: userInfo.Email ?? "", username: userInfo.Nickname ?? "");
         }
 
         /// <summary>

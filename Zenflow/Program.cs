@@ -14,6 +14,19 @@ namespace FintechStatsPlatform
         {
             Env.Load();
             var builder = WebApplication.CreateBuilder(args);
+            var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(name: MyAllowSpecificOrigins,
+                    policy =>
+                    {
+                        policy.WithOrigins("http://localhost:5173", "https://your-frontend-domain.com")
+                              .AllowCredentials()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
 
             // Database
             builder.Services.AddDbContextPool<FintechContext>(opt =>
@@ -113,6 +126,8 @@ namespace FintechStatsPlatform
             });
 
             var app = builder.Build();
+
+            app.UseCors(MyAllowSpecificOrigins);
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>

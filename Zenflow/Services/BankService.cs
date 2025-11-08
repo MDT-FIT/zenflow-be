@@ -1,10 +1,10 @@
-using System.Net.Http.Headers;
-using System.Text.Json;
 using FintechStatsPlatform.DTO;
 using FintechStatsPlatform.Enumirators;
 using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using Zenflow.Helpers;
 using static Zenflow.Helpers.ExceptionTypes;
 
@@ -40,7 +40,7 @@ namespace FintechStatsPlatform.Services
                     GetUserAccounts(filter.UserId).Select(a => a.Id!).ToList()
                 );
 
-            var tinkAccountIds = filter
+            string[] tinkAccountIds = filter
                 .AccountIds.Where(a =>
                     a.StartsWith(
                         BankNameMapper.BankNameToIdMap[BankName.OTHER],
@@ -56,20 +56,20 @@ namespace FintechStatsPlatform.Services
                 )
                 .ToArray();
 
-            var tinkTransactions = new List<TinkTransaction>();
+            List<TinkTransaction> tinkTransactions = new List<TinkTransaction>();
 
             if (tinkAccountIds.Length > 0)
             {
                 var parameters = new
                 {
-                    accounts = filter.AccountIds,
+                    accounts = tinkAccountIds,
                     startDate = filter.DateFrom,
                     endDate = filter.DateTo,
                     minAmount,
                     maxAmount,
                 };
 
-                var request = new HttpRequestMessage(
+                HttpRequestMessage request = new HttpRequestMessage(
                     HttpMethod.Post,
                     EnvConfig.TinkListTransactionUri
                 )
@@ -81,12 +81,12 @@ namespace FintechStatsPlatform.Services
                     userAccessToken
                 );
 
-                var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(
+                TinkTransactionResponse? apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(
                     content,
                     serializationOptions
                 );
@@ -94,58 +94,12 @@ namespace FintechStatsPlatform.Services
                 tinkTransactions = apiResponse?.Results.Select(r => r.Transaction).ToList() ?? [];
             }
 
-            foreach (var transaction in tinkTransactions)
+            foreach (TinkTransaction transaction in tinkTransactions)
             {
                 transaction.UserId = filter.UserId;
             }
 
             return tinkTransactions;
-
-            //// Define parameters and convert them to JSON content
-            //var parameters = new { accounts = filter.AccountIds, startDate = filter.DateFrom, endDate = filter.DateTo };
-            //var jsonContent = JsonContent.Create(parameters);
-
-            //// Tink Api request
-            //if (tinkAccountIds != null && tinkAccountIds.Length > 0)
-            //{
-            //    // Form POST request to Tink's API
-            //    var requestMessage = new HttpRequestMessage
-            //    {
-            //        Method = HttpMethod.Post,
-            //        Content = jsonContent,
-            //        RequestUri = EnvConfig.TinkListTransactionUri,
-            //    };
-
-            //    // Add header with user's access token
-            //    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userAccessToken);
-
-            //    // Send request and throw exception in case it failed
-            //    var response = await _httpClient.SendAsync(requestMessage).ConfigureAwait(false);
-            //    response.EnsureSuccessStatusCode();
-
-            //    var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-            //    var apiResponse = JsonSerializer.Deserialize<TinkTransactionResponse>(content, new JsonSerializerOptions
-            //    {
-            //        PropertyNameCaseInsensitive = true
-            //    });
-
-            //    tinkTransactions = apiResponse?.Results
-            //        .Select(r => r.Transaction).ToList();
-            //}
-
-            //// Add mono logic later {...}
-
-            //// Attach User's id to each transaction
-            //if (tinkTransactions != null)
-            //{
-            //    foreach (var transaction in tinkTransactions)
-            //    {
-            //        transaction.UserId = filter.UserId;
-            //    }
-            //}
-
-            //return tinkTransactions ?? [];
         }
 
         private List<BankAccount> GetUserAccounts(string userId)
@@ -155,11 +109,15 @@ namespace FintechStatsPlatform.Services
 
         public List<BankConfig> ListBankConfigs(string userId)
         {
-            var user =
+
+
+
+            User user =
                 _context.Users.FirstOrDefault(u => u.Id == userId)
                 ?? throw new UserNotFoundException("id", userId);
 
-            var allConfigs = _context.Banks.ToList();
+
+            List<BankConfig> allConfigs = _context.Banks.ToList();
 
             return allConfigs.Where(config => !user.IsBankConnected(config.Name)).ToList();
         }
@@ -170,12 +128,14 @@ namespace FintechStatsPlatform.Services
             string userId
         )
         {
-            var results = new List<Balance>();
+            List<Balance> results = new List<Balance>();
 
-            foreach (var accountId in accountIds)
+            foreach (string accountId in accountIds)
                 try
                 {
-                    var balance = await GetBalanceAsync(accountId, token, userId)
+                    Balance balance = await GetBalanceAsync(accountId.Replace(BankNameMapper.BankNameToIdMap[BankName.OTHER],
+                       "",
+                       StringComparison.OrdinalIgnoreCase), token, userId)
                         .ConfigureAwait(false);
                     results.Add(balance);
                 }
@@ -186,7 +146,7 @@ namespace FintechStatsPlatform.Services
                 catch (Exception ex)
                 {
                     Console.WriteLine(
-                        $"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex.ToString()}"
+                        $"Untrackable exception occured while attempt of processing account #{accountId} :\n{ex}"
                     );
                 }
 
@@ -199,7 +159,7 @@ namespace FintechStatsPlatform.Services
             string userId
         )
         {
-            var request = new HttpRequestMessage(
+            HttpRequestMessage request = new HttpRequestMessage(
                 HttpMethod.Get,
                 EnvConfig.TinkGetBalanceUri(accountId)
             );
@@ -208,7 +168,7 @@ namespace FintechStatsPlatform.Services
                 tinkAccessToken
             );
 
-            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -221,8 +181,8 @@ namespace FintechStatsPlatform.Services
                 throw new ExternalApiException("Tink", $"Status: {response.StatusCode}");
             }
 
-            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            using var doc = JsonDocument.Parse(content);
+            string content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using JsonDocument doc = JsonDocument.Parse(content);
 
             return Balance.FromTinkJson(content, userId);
         }
@@ -234,66 +194,213 @@ namespace FintechStatsPlatform.Services
 
         public async Task ConnectOtherBankAsync(string userId, string tinkAccessToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, EnvConfig.TinkListAccountUri);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, EnvConfig.TinkListAccountUri);
             request.Headers.Authorization = new AuthenticationHeaderValue(
                 "Bearer",
                 tinkAccessToken
             );
 
-            var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+            HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            using var doc = JsonDocument.Parse(json);
+            string json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            using JsonDocument doc = JsonDocument.Parse(json);
 
-            var accountsJson = doc.RootElement.GetProperty("accounts");
+            JsonElement accountsJson = doc.RootElement.GetProperty("accounts");
 
-            var bank =
+            User user = _context.Users.FirstOrDefault(user => user.Id == userId)
+                ?? throw new UserNotFoundException("User", userId);
+
+            BankConfig bank =
                 _context.Banks.FirstOrDefault(b => b.Name == BankName.OTHER)
                 ?? throw new BankNotFoundException("OTHER");
 
-            var userAccounts = new List<BankAccount>();
+            List<BankAccount> userAccounts = new List<BankAccount>();
 
-            foreach (var account in accountsJson.EnumerateArray())
+            foreach (JsonElement account in accountsJson.EnumerateArray())
             {
-                var bankAccount = BankAccount.CreateFromTinkJson
+                BankAccount bankAccount = BankAccount.CreateFromTinkJson
                 (
                     account,
                     userId,
                     bank.Id ?? throw new ArgumentException($"There isn't bankId for bank {bank.Name}")
                 );
+
+                userAccounts.Add(bankAccount);
+
             }
 
             await _context.BankAccounts.AddRangeAsync(userAccounts).ConfigureAwait(false);
             await _context.SaveChangesAsync().ConfigureAwait(false);
         }
 
-        public string GetTinkAccessToken(string code = "")
+        public async Task<(string, double)> GetTinkClientToken()
         {
-            var parameters = new Dictionary<string, string>()
-            {
-                { "grant_type", EnvConfig.TinkGrantType },
-                { "code", code },
-                { "client_id", EnvConfig.TinkClientId },
-                { "client_secret", EnvConfig.TinkClientSecret },
-            };
+            Dictionary<string, string> clientParameters = new Dictionary<string, string>()
+    {
+        { "grant_type", "client_credentials" },
+        { "scope", "authorization:grant,user:create" },
+        { "client_id", EnvConfig.TinkClientId },
+        { "client_secret", EnvConfig.TinkClientSecret },
+    };
 
-            var response = _httpClient
-                .PostAsync(EnvConfig.TinkTokentUri, new FormUrlEncodedContent(parameters))
-                .Result;
-            response.EnsureSuccessStatusCode();
+            HttpResponseMessage clientResponse = await _httpClient
+                .PostAsync(EnvConfig.TinkTokentUri, new FormUrlEncodedContent(clientParameters));
+            clientResponse.EnsureSuccessStatusCode();
 
-            var json = response.Content.ReadAsStringAsync().Result;
-            using var doc = JsonDocument.Parse(json);
 
-            return doc.RootElement.GetProperty("access_token").GetString() ?? "";
+            using JsonDocument clientDoc = JsonDocument.Parse(await clientResponse.Content.ReadAsStringAsync());
+            string clientToken = clientDoc.RootElement.GetProperty("access_token").GetString() ?? "";
+            double expiresIn = clientDoc.RootElement.GetProperty("expires_in").GetInt16();
+
+            return (clientToken, expiresIn);
         }
 
-        public async Task<List<BankConfig>> GetBanksAsync() =>
-            await _context.Banks.ToListAsync().ConfigureAwait(false);
+        public async Task<string> GetTinkLink(string userId, string clientToken)
+        {
 
-        public async Task<BankConfig> GetBankByIdAsync(string id) =>
-            await _context.Banks.FindAsync(id).ConfigureAwait(false);
+            // Create permanent user
+
+            Dictionary<string, string> userParameters = new Dictionary<string, string>()
+    {
+        { "external_user_id", userId },
+        { "market", "PL" },
+        { "locale", "en_US" },
+         { "retention_class", "permanent" },
+    };
+
+            HttpRequestMessage userRequest = new HttpRequestMessage(HttpMethod.Post, EnvConfig.TinkCreateUser)
+            {
+                Content = JsonContent.Create(userParameters)
+            };
+
+            userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", clientToken);
+
+
+            try
+            {
+                HttpResponseMessage userResponse = await _httpClient.SendAsync(userRequest);
+            }
+            catch (HttpRequestException ex)
+            {
+                if (Equals(ex.StatusCode, StatusCodes.Status409Conflict))
+                {
+                    Console.WriteLine("User exists");
+                }
+                else
+                {
+                    throw new UnexpectedException();
+                }
+
+            }
+
+
+            // Authorize User
+            try
+            {
+                Dictionary<string, string> userAuthParameters = new Dictionary<string, string>()
+    {
+        { "external_user_id", userId },
+         { "actor_client_id", EnvConfig.TinkActorClientId },
+         { "id_hint", userId},
+            { "scope", "authorization:read,authorization:grant,credentials:refresh,credentials:read,credentials:write,providers:read,user:read" },
+    };
+
+                HttpRequestMessage userAuthRequest = new HttpRequestMessage(HttpMethod.Post, EnvConfig.TinkUserAuthDelegateCode)
+                {
+                    Content = new FormUrlEncodedContent(userAuthParameters)
+                };
+
+                userAuthRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", clientToken);
+
+                HttpResponseMessage userAuthResponse = await _httpClient.SendAsync(userAuthRequest);
+                userAuthResponse.EnsureSuccessStatusCode();
+
+                using JsonDocument userAuthDoc = JsonDocument.Parse(await userAuthResponse.Content.ReadAsStringAsync());
+                string authCode = userAuthDoc.RootElement.GetProperty("code").GetString() ?? "";
+
+                string scope = "accounts:read transactions:read user:read balances:read";
+
+                string url = $"https://link.tink.com/1.0/transactions/connect-accounts" +
+                 $"?client_id={EnvConfig.TinkClientId}" +
+                 $"&redirect_uri={EnvConfig.TinkRedirectUri}" +
+                 $"&authorization_code={authCode}" +
+                 $"&scope={Uri.EscapeDataString(scope)}" +
+                 $"&state={userId}" +
+                 $"&market=PL"
+                 +
+                 $"&locale=en_US";
+
+                return url;
+            }
+            catch (HttpRequestException ex)
+            {
+                throw new ExternalApiException("Tink Delegate Access", ex.Message);
+            }
+        }
+
+        public async Task<(string, double)> GetTinkUserAccessToken(string userId = "", string clientToken = "")
+        {
+
+            Dictionary<string, string> userAuthParameters = new Dictionary<string, string>()
+        {
+        { "external_user_id", userId },
+            { "scope", "accounts:read,balances:read,transactions:read,provider-consents:read" },
+    };
+
+            HttpRequestMessage userAuthRequest = new HttpRequestMessage(HttpMethod.Post, EnvConfig.TinkUserAuthCode)
+            {
+                Content = new FormUrlEncodedContent(userAuthParameters)
+            };
+
+            userAuthRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", clientToken);
+
+            HttpResponseMessage userAuthResponse = await _httpClient.SendAsync(userAuthRequest);
+            userAuthResponse.EnsureSuccessStatusCode();
+
+            using JsonDocument userAuthDoc = JsonDocument.Parse(await userAuthResponse.Content.ReadAsStringAsync());
+            string authCode = userAuthDoc.RootElement.GetProperty("code").GetString() ?? "";
+
+
+            // User token request using the auth code
+
+            Dictionary<string, string> userTokenParameters = new Dictionary<string, string>()
+    {
+        { "grant_type", EnvConfig.TinkGrantType }, // e.g., "authorization_code"
+        { "code", authCode },
+        { "client_id", EnvConfig.TinkClientId },
+        { "client_secret", EnvConfig.TinkClientSecret },
+    };
+
+            HttpRequestMessage userTokenRequest = new HttpRequestMessage(HttpMethod.Post, EnvConfig.TinkTokentUri)
+            {
+                Content = new FormUrlEncodedContent(userTokenParameters)
+            };
+
+            userTokenRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", clientToken);
+
+
+
+            HttpResponseMessage userTokenResponse = await _httpClient.SendAsync(userTokenRequest);
+            userTokenResponse.EnsureSuccessStatusCode();
+
+            using JsonDocument userTokentDoc = JsonDocument.Parse(await userTokenResponse.Content.ReadAsStringAsync());
+            string userToken = userTokentDoc.RootElement.GetProperty("access_token").GetString() ?? "";
+
+            double expiresIn = userTokentDoc.RootElement.GetProperty("expires_in").GetInt16();
+
+            return (userToken, expiresIn);
+        }
+
+        public async Task<List<BankConfig>> GetBanksAsync()
+        {
+            return await _context.Banks.ToListAsync().ConfigureAwait(false);
+        }
+
+        public async Task<BankConfig> GetBankByIdAsync(string id)
+        {
+            return await _context.Banks.FindAsync(id).ConfigureAwait(false);
+        }
 
         public async Task<BankConfig> AddBankAsync(BankConfig bank)
         {
@@ -323,7 +430,7 @@ namespace FintechStatsPlatform.Services
 
         public async Task<bool> DeleteBankAsync(string id)
         {
-            var bank = await _context.Banks.FindAsync(id).ConfigureAwait(false);
+            BankConfig? bank = await _context.Banks.FindAsync(id).ConfigureAwait(false);
             if (bank == null)
                 return false;
 
@@ -332,7 +439,9 @@ namespace FintechStatsPlatform.Services
             return true;
         }
 
-        private async Task<bool> BankExistsAsync(string id) =>
-            await _context.Banks.AnyAsync(b => b.Id == id).ConfigureAwait(false);
+        private async Task<bool> BankExistsAsync(string id)
+        {
+            return await _context.Banks.AnyAsync(b => b.Id == id).ConfigureAwait(false);
+        }
     }
 }
