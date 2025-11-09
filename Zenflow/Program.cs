@@ -13,15 +13,15 @@ namespace FintechStatsPlatform
         public static void Main(string[] args)
         {
             Env.Load();
-            var builder = WebApplication.CreateBuilder(args);
-            var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+            string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(name: MyAllowSpecificOrigins,
                     policy =>
                     {
-                        policy.WithOrigins("http://localhost:5173", "https://your-frontend-domain.com")
+                        policy.WithOrigins("http://localhost:5173", "https://zenflow-fe.vercel.app")
                               .AllowCredentials()
                               .AllowAnyHeader()
                               .AllowAnyMethod();
@@ -34,8 +34,8 @@ namespace FintechStatsPlatform
             );
 
             // Environment variables
-            var clientId = EnvConfig.TinkClientId;
-            var clientSecret = EnvConfig.TinkClientSecret;
+            string clientId = EnvConfig.TinkClientId;
+            string clientSecret = EnvConfig.TinkClientSecret;
 
             // Controllers
             builder.Services.AddControllers();
@@ -50,35 +50,35 @@ namespace FintechStatsPlatform
             // DI registration for each service
             builder.Services.AddScoped(provider =>
             {
-                var context = provider.GetRequiredService<FintechContext>();
-                var httpClient = provider.GetRequiredService<HttpClient>();
+                FintechContext context = provider.GetRequiredService<FintechContext>();
+                HttpClient httpClient = provider.GetRequiredService<HttpClient>();
 
                 return new BankService(httpClient, context);
             });
             builder.Services.AddScoped(provider =>
             {
-                var context = provider.GetRequiredService<FintechContext>();
-                var httpClient = provider.GetRequiredService<HttpClient>();
+                FintechContext context = provider.GetRequiredService<FintechContext>();
+                HttpClient httpClient = provider.GetRequiredService<HttpClient>();
 
                 return new UserService(httpClient, context);
             });
             builder.Services.AddScoped(provider =>
             {
-                var httpClient = provider.GetRequiredService<HttpClient>();
+                HttpClient httpClient = provider.GetRequiredService<HttpClient>();
 
                 return new AuthService(httpClient);
             });
             builder.Services.AddScoped(provider =>
             {
-                var bankService = provider.GetRequiredService<BankService>();
-                var httpClient = provider.GetRequiredService<HttpClient>();
+                BankService bankService = provider.GetRequiredService<BankService>();
+                HttpClient httpClient = provider.GetRequiredService<HttpClient>();
 
                 return new AnalyticService(bankService, httpClient);
             });
 
             // JWT Authentication для Auth0
-            var domain = EnvConfig.AuthDomain;
-            var audience = EnvConfig.AuthAudience;
+            string domain = EnvConfig.AuthDomain;
+            string audience = EnvConfig.AuthAudience;
 
             if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(audience))
             {
@@ -125,7 +125,7 @@ namespace FintechStatsPlatform
                 );
             });
 
-            var app = builder.Build();
+            WebApplication app = builder.Build();
 
             app.UseCors(MyAllowSpecificOrigins);
 
@@ -141,7 +141,7 @@ namespace FintechStatsPlatform
             app.Use(
                 async (context, next) =>
                 {
-                    if (context.Request.Cookies.TryGetValue(EnvConfig.AuthJwt, out var authToken))
+                    if (context.Request.Cookies.TryGetValue(EnvConfig.AuthJwt, out string? authToken))
                     {
                         context.Request.Headers["Authorization"] = $"Bearer {authToken}";
                     }
@@ -156,9 +156,9 @@ namespace FintechStatsPlatform
             app.MapControllers();
 
             // Database connection check
-            using (var scope = app.Services.CreateScope())
+            using (IServiceScope scope = app.Services.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<FintechContext>();
+                FintechContext db = scope.ServiceProvider.GetRequiredService<FintechContext>();
 
                 if (db.Database.CanConnect())
                 {
