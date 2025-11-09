@@ -1,4 +1,5 @@
-﻿using FintechStatsPlatform.Filters;
+﻿using Asp.Versioning;
+using FintechStatsPlatform.Filters;
 using FintechStatsPlatform.Helpers;
 using FintechStatsPlatform.Models;
 using FintechStatsPlatform.Services;
@@ -10,7 +11,9 @@ using Zenflow.Helpers;
 namespace FintechStatsPlatform.Controllers
 {
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    [ApiVersion("1.0")] 
+    [ApiVersion("2.0")]
     [ApiController]
     public class BankController(BankService banksService, AnalyticService analyticService)
         : ControllerBase

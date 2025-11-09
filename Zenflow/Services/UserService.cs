@@ -22,7 +22,7 @@ namespace FintechStatsPlatform.Services
                 .ConfigureAwait(false);
 
             if (user == null)
-                throw new UserNotFoundException("user", email);
+                throw new UserNotFoundException("email", email);
 
             return user;
         }
@@ -79,6 +79,19 @@ namespace FintechStatsPlatform.Services
         private bool UserExists(string id)
         {
             return _context.Users.Any(u => u.Id == id);
+        }
+
+        public async Task<DateTime> GetUserTime(string id, bool mode=false) 
+        {
+            var user = await _context.Users
+                                     .AsNoTracking()
+                                     .FirstOrDefaultAsync(u => u.Id == id)
+                                     .ConfigureAwait(false);
+
+            if (user == null)
+                throw new UserNotFoundException("id", id);
+
+            return  mode ? user.CreatedAt : user.UpdatedAt;
         }
     }
 }
