@@ -380,10 +380,18 @@ namespace Zenflow.Controllers
             }
             catch (Exception ex)
             {
+
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("duplicate", StringComparison.OrdinalIgnoreCase))
+                {
+                    return StatusCode(
+                   500,
+                   new { error = "You can not connect this account, because it has been already connected", details = ex.Message }
+               );
+                }
                 return StatusCode(
-                    500,
-                    new { error = "Внутрішня помилка сервера", details = ex.Message }
-                );
+                500,
+                new { error = "Внутрішня помилка сервера", details = ex.Message }
+            );
             }
         }
 
