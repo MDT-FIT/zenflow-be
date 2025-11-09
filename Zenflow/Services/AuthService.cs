@@ -1,4 +1,4 @@
-﻿using FintechStatsPlatform.Models;
+﻿using Zenflow.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using Zenflow.Helpers;
 using static Zenflow.Helpers.ExceptionTypes;
 
-namespace FintechStatsPlatform.Services
+namespace Zenflow.Services
 {
     public class Auth0TokenResponse
     {

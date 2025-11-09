@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using MapsterMapper;
 
-namespace FintechStatsPlatform.Filters
+namespace Zenflow.Filters
 {
     public class TransactionFilter : AbstractFilter
     {

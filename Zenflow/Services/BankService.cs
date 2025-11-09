@@ -1,14 +1,14 @@
-using FintechStatsPlatform.DTO;
-using FintechStatsPlatform.Enumirators;
-using FintechStatsPlatform.Filters;
-using FintechStatsPlatform.Models;
+using Zenflow.DTO;
+using Zenflow.Enumirators;
+using Zenflow.Filters;
+using Zenflow.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Zenflow.Helpers;
 using static Zenflow.Helpers.ExceptionTypes;
 
-namespace FintechStatsPlatform.Services
+namespace Zenflow.Services
 {
     public class BankService
     {

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace FintechStatsPlatform.Models
+namespace Zenflow.Models
 {
     public class Balance : AbstractEntity
     {

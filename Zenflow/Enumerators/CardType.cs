@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace FintechStatsPlatform.Enumirators
+namespace Zenflow.Enumirators
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum CardType

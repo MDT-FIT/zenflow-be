@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FintechStatsPlatform.Models.EntityTypeConfigs
+namespace Zenflow.Models.EntityTypeConfigs
 {
     public class BankAccountEntityTypeConfiguration : IEntityTypeConfiguration<BankAccount>
     {

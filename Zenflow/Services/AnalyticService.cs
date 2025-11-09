@@ -1,10 +1,10 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json;
-using FintechStatsPlatform.DTO;
-using FintechStatsPlatform.Filters;
-using FintechStatsPlatform.Models;
+using Zenflow.DTO;
+using Zenflow.Filters;
+using Zenflow.Models;
 
-namespace FintechStatsPlatform.Services
+namespace Zenflow.Services
 {
     public class AnalyticService
     {

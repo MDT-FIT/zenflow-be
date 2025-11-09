@@ -1,6 +1,6 @@
 ﻿using MapsterMapper;
 
-namespace FintechStatsPlatform.Models
+namespace Zenflow.Models
 {
     public abstract class AbstractEntity
     {

@@ -1,7 +1,7 @@
-﻿using FintechStatsPlatform.Enumirators;
+﻿using Zenflow.Enumirators;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
-namespace FintechStatsPlatform.Models
+namespace Zenflow.Models
 {
     public class User : AbstractEntity
     {

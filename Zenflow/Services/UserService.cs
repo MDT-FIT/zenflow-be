@@ -1,8 +1,8 @@
-﻿using FintechStatsPlatform.Models;
+﻿using Zenflow.Models;
 using Microsoft.EntityFrameworkCore;
 using static Zenflow.Helpers.ExceptionTypes;
 
-namespace FintechStatsPlatform.Services
+namespace Zenflow.Services
 {
     public class UserService
     {

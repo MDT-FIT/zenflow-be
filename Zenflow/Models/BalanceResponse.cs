@@ -1,4 +1,4 @@
-﻿namespace FintechStatsPlatform.Models
+﻿namespace Zenflow.Models
 {
     public class BalanceValue
     {

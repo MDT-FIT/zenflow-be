@@ -1,8 +1,8 @@
-﻿using FintechStatsPlatform.Models;
-using FintechStatsPlatform.Services;
+﻿using Zenflow.Models;
+using Zenflow.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FintechStatsPlatform.Controllers
+namespace Zenflow.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

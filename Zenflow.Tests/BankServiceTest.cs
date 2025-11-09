@@ -1,6 +1,6 @@
-using FintechStatsPlatform.Enumirators;
-using FintechStatsPlatform.Models;
-using FintechStatsPlatform.Services;
+using Zenflow.Enumirators;
+using Zenflow.Models;
+using Zenflow.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Moq;

@@ -1,7 +1,7 @@
-﻿using FintechStatsPlatform.Models.EntityTypeConfigs;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Zenflow.Models.EntityTypeConfigs;
 
-namespace FintechStatsPlatform.Models
+namespace Zenflow.Models
 {
     public class FintechContext(DbContextOptions<FintechContext> options) : DbContext(options)
     {

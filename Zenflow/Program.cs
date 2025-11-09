@@ -1,12 +1,12 @@
 using DotNetEnv;
-using FintechStatsPlatform.Models;
-using FintechStatsPlatform.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Zenflow.Helpers;
+using Zenflow.Models;
+using Zenflow.Services;
 
-namespace FintechStatsPlatform
+namespace Zenflow
 {
     public static class Program
     {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace FintechStatsPlatform.Enumirators
+namespace Zenflow.Enumirators
 {
     public enum BankName
     {

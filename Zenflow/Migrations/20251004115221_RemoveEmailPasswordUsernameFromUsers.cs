@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace FintechStatsPlatform.Migrations
+namespace Zenflow.Migrations
 {
     /// <inheritdoc />
     public partial class RemoveEmailPasswordUsernameFromUsers : Migration

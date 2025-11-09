@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
-using FintechStatsPlatform.Enumirators;
+using Zenflow.Enumirators;
 
-namespace FintechStatsPlatform.DTO
+namespace Zenflow.DTO
 {
     public class TinkCardResponse
     {

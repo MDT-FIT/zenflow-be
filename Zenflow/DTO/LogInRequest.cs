@@ -1,4 +1,4 @@
-﻿namespace FintechStatsPlatform.DTO
+﻿namespace Zenflow.DTO
 {
     public class LogInRequest
     {

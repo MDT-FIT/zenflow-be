@@ -1,8 +1,8 @@
-﻿using FintechStatsPlatform.Enumirators;
+﻿using Zenflow.Enumirators;
 using System.Text.Json;
 using static Zenflow.Helpers.ExceptionTypes;
 
-namespace FintechStatsPlatform.Models
+namespace Zenflow.Models
 {
     public class BankAccount : AbstractEntity
     {

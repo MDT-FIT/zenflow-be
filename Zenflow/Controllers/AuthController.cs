@@ -1,15 +1,14 @@
-﻿using FintechStatsPlatform.DTO;
-using FintechStatsPlatform.Helpers;
-using FintechStatsPlatform.Models;
-using FintechStatsPlatform.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using Zenflow.DTO;
 using Zenflow.Helpers;
+using Zenflow.Models;
+using Zenflow.Services;
 using static Zenflow.Helpers.ExceptionTypes;
 
-namespace FintechStatsPlatform.Controllers
+namespace Zenflow.Controllers
 {
     [ApiController]
     [Route("api/zenflow/[controller]")]

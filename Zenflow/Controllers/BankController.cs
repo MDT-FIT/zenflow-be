@@ -1,13 +1,12 @@
-﻿using FintechStatsPlatform.Enumirators;
-using FintechStatsPlatform.Filters;
-using FintechStatsPlatform.Helpers;
-using FintechStatsPlatform.Models;
-using FintechStatsPlatform.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Zenflow.Enumirators;
+using Zenflow.Filters;
 using Zenflow.Helpers;
+using Zenflow.Models;
+using Zenflow.Services;
 
-namespace FintechStatsPlatform.Controllers
+namespace Zenflow.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]

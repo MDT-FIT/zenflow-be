@@ -1,4 +1,4 @@
-﻿namespace FintechStatsPlatform.Helpers
+﻿namespace Zenflow.Helpers
 {
     public static class CookieConfig
     {

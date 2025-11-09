@@ -1,9 +1,9 @@
-﻿using FintechStatsPlatform.Enumirators;
+﻿using Zenflow.Enumirators;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace FintechStatsPlatform.Models.EntityTypeConfigs
+namespace Zenflow.Models.EntityTypeConfigs
 {
     public class BankEntityTypeConfiguration : IEntityTypeConfiguration<BankConfig>
     {

@@ -1,6 +1,6 @@
 ﻿using MapsterMapper;
 
-namespace FintechStatsPlatform.Filters
+namespace Zenflow.Filters
 {
     public abstract class AbstractFilter
     {

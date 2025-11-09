@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FintechStatsPlatform.Models.EntityTypeConfigs
+namespace Zenflow.Models.EntityTypeConfigs
 {
     public class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
     {

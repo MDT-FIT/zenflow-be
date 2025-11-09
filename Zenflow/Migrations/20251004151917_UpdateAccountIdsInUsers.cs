@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace FintechStatsPlatform.Migrations
+namespace Zenflow.Migrations
 {
     /// <inheritdoc />
     public partial class UpdateAccountIdsInUsers : Migration

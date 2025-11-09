@@ -1,6 +1,6 @@
-﻿using FintechStatsPlatform.Enumirators;
+﻿using Zenflow.Enumirators;
 
-namespace FintechStatsPlatform.Models
+namespace Zenflow.Models
 {
     public class Card : AbstractEntity
     {
