@@ -52,18 +52,18 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Sign up attempt for email: {Email}", request.Email);
 
-                var auth0User = await _authService
+                Auth0UserInfo auth0User = await _authService
                     .SignUpAsync(request.Username, request.Email, request.Password)
                     .ConfigureAwait(false);
 
-                var tokenResponse = await _authService
+                Auth0TokenResponse tokenResponse = await _authService
                     .LogInAsync(request.Email, request.Password)
                     .ConfigureAwait(false);
 
-                var handler = new JwtSecurityTokenHandler();
-                var idToken = handler.ReadJwtToken(tokenResponse.IdToken);
+                JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+                JwtSecurityToken idToken = handler.ReadJwtToken(tokenResponse.IdToken);
 
-                var user = _authService.ConvertToUser(auth0User, idToken.Payload.Sub);
+                User user = _authService.ConvertToUser(auth0User, idToken.Payload.Sub);
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync().ConfigureAwait(false);
 
@@ -117,15 +117,15 @@ namespace FintechStatsPlatform.Controllers
             {
                 _logger.LogInformation("Login attempt for email: {Email}", request.Email);
 
-                var tokenResponse = await _authService
+                Auth0TokenResponse tokenResponse = await _authService
                     .LogInAsync(request.Email, request.Password)
                     .ConfigureAwait(false);
 
-                var userInfo = await _authService
+                Auth0UserInfo userInfo = await _authService
                     .GetUserInfoAsync(tokenResponse.AccessToken ?? "")
                     .ConfigureAwait(false);
 
-                var user = await _context
+                User? user = await _context
                     .Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub)
                     .ConfigureAwait(false);
 
@@ -189,7 +189,7 @@ namespace FintechStatsPlatform.Controllers
             string token = HttpContext.Request.Cookies[EnvConfig.AuthJwt] ?? "";
             string refreshToken = HttpContext.Request.Cookies[EnvConfig.AuthRefreshJwt] ?? "";
 
-            var isTokenValid = AuthService.ValidateToken(token);
+            bool isTokenValid = AuthService.ValidateToken(token);
 
             try
             {
@@ -197,7 +197,7 @@ namespace FintechStatsPlatform.Controllers
 
                 if (isTokenValid == false)
                 {
-                    var tokenResponse = await _authService
+                    Auth0TokenResponse tokenResponse = await _authService
                    .RefreshTokenAsync(refreshToken)
                    .ConfigureAwait(false);
 
@@ -213,11 +213,11 @@ namespace FintechStatsPlatform.Controllers
 
                 _logger.LogInformation("Attempt to get UserInfo");
 
-                var userInfo = await _authService
+                Auth0UserInfo userInfo = await _authService
                     .GetUserInfoAsync(currentToken)
                     .ConfigureAwait(false);
 
-                var user = await _context
+                User? user = await _context
                     .Users.FirstOrDefaultAsync(user => user.Id == userInfo.Sub)
                     .ConfigureAwait(false);
 
@@ -233,12 +233,12 @@ namespace FintechStatsPlatform.Controllers
                     await _context.SaveChangesAsync().ConfigureAwait(false);
                 }
 
-                var accountIds = await _context
+                List<string?> accountIds = await _context
                  .BankAccounts.Where(account => account.UserId == user.Id)
                  .Select(account => account.Id).ToListAsync();
 
                 user.AccountIds = accountIds.Where(account => account != null).Select(account => account!).ToList();
-                var userAggregated = new User(id: user.Id ?? "", username: userInfo.Nickname ?? "", email: userInfo.Email ?? "", accountIds: user.AccountIds);
+                User userAggregated = new User(id: user.Id ?? "", username: userInfo.Nickname ?? "", email: userInfo.Email ?? "", accountIds: user.AccountIds);
 
                 await _context.SaveChangesAsync().ConfigureAwait(false);
 
@@ -274,7 +274,7 @@ namespace FintechStatsPlatform.Controllers
 
             try
             {
-                var tokenResponse = await _authService
+                Auth0TokenResponse tokenResponse = await _authService
                     .RefreshTokenAsync(refreshToken)
                     .ConfigureAwait(false);
 
@@ -309,8 +309,8 @@ namespace FintechStatsPlatform.Controllers
         [HttpPost("log-out")]
         public IActionResult LogOut()
         {
-            HttpContext.Response.Cookies.Delete(EnvConfig.AuthJwt);
-            HttpContext.Response.Cookies.Delete(EnvConfig.AuthRefreshJwt);
+            HttpContext.Response.Cookies.Delete(EnvConfig.AuthJwt, CookieConfig.Default());
+            HttpContext.Response.Cookies.Delete(EnvConfig.AuthRefreshJwt, CookieConfig.Default());
 
             return Ok(new { message = "Вихід успішний" });
         }

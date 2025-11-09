@@ -53,7 +53,14 @@
         public static readonly Uri TinkListTransactionUri = new Uri($"{TinkApi}/api/v1/search");
         public static readonly Uri TinkRedirectUri = new Uri("http://localhost:5173/connect-bank");
 
-        public static Uri TinkGetBalanceUri(string accountId) =>
-            new Uri($"{TinkApi}/api/v1/accounts/{accountId}/balances");
+        public static Uri TinkGetBalanceUri(string accountId)
+        {
+            return new Uri($"{TinkApi}/api/v1/accounts/{accountId}/balances");
+        }
+
+        public static Uri TinkAccountCheck(string accountId)
+        {
+            return new Uri($"{TinkApi}/api/v1/account-verification-reports/{accountId}");
+        }
     }
 }

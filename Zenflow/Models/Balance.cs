@@ -31,15 +31,16 @@ namespace FintechStatsPlatform.Models
 
         public static Balance FromTinkJson(string jsonString, string userId)
         {
-            using var doc = JsonDocument.Parse(jsonString);
-            var available = doc.RootElement.GetProperty("balances").GetProperty("available");
+            using JsonDocument doc = JsonDocument.Parse(jsonString);
+            JsonElement available = doc.RootElement.GetProperty("balances").GetProperty("available");
 
             return new Balance(
                 userId,
                 available.GetProperty("unscaledValue").GetInt64(),
                 available.GetProperty("scale").GetInt32(),
-                doc.RootElement.GetProperty("accountId").GetString() ?? "",
-                available.GetProperty("currencyCode").GetString() ?? ""
+                available.GetProperty("currencyCode").GetString() ?? "",
+                doc.RootElement.GetProperty("accountId").GetString() ?? ""
+
             );
         }
     }
