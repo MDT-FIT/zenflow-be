@@ -1,0 +1,12 @@
+ü
+ìD:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\obj\Debug\net8.0\Zenflow.Tests.GlobalUsings.g.csutf-8ù
+ëD:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\obj\Debug\net8.0\Zenflow.Tests.AssemblyInfo.csutf-8Æ
+¢D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.csutf-8}
+rC:\Users\admin\.nuget\packages\microsoft.net.test.sdk\17.8.0\build\netcoreapp3.1\Microsoft.NET.Test.Sdk.Program.csutf-8~
+uD:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\TestAuthHandler.csutf-8à
+D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\SqlServerIntegrationTests.csutf-8Ö
+|D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\SqliteIntegrationTests.csutf-8Ñ
+{D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\MySqlIntegrationTests.csutf-8~
+uD:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\BankServiceTest.csutf-8Ç
+yD:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\ApiIntegrationTests.csutf-8á
+~D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\ApiWebApplicationFactory.csutf-8

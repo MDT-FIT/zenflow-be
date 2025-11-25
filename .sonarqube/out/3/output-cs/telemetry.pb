@@ -1,0 +1,1 @@
+çRwD:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\Zenflow.Tests.csproj¢net8.0ÚCSharp12

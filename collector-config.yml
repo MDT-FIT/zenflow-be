@@ -1,0 +1,49 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  zipkin:
+    endpoint: "0.0.0.0:9095"
+
+processors:
+  batch:
+  memory_limiter:
+    limit_mib: 400
+    spike_limit_mib: 100
+    check_interval: 5s
+
+exporters:
+  zipkin:
+    endpoint: "http://zipkin:9411/api/v2/spans"
+  
+  # Ensure Prometheus metrics are exposed
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+  
+  # MAIN PATH: Send everything to Elastic APM Server
+  otlp/elastic:
+    # CHANGE THIS: Point to 8200, which handles both HTTP and gRPC
+    endpoint: "apm-server:8200" 
+    tls:
+      insecure: true
+
+service:
+  telemetry:
+    metrics:
+      address: 0.0.0.0:8888 
+  pipelines:
+    traces:
+      receivers: [otlp, zipkin]
+      processors: [batch]
+      exporters: [zipkin, otlp/elastic] # Removed elasticsearch
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus, otlp/elastic] # Removed elasticsearch
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/elastic] # Removed elasticsearch

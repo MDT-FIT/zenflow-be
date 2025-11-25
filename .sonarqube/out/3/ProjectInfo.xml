@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ProjectInfo xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.sonarsource.com/msbuild/integration/2015/1">
+  <ProjectName>Zenflow.Tests</ProjectName>
+  <ProjectLanguage>C#</ProjectLanguage>
+  <ProjectType>Test</ProjectType>
+  <ProjectGuid>4f371cb4-5678-bfdc-5200-ecb78af74627</ProjectGuid>
+  <FullPath>D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\Zenflow.Tests\Zenflow.Tests.csproj</FullPath>
+  <IsExcluded>false</IsExcluded>
+  <AnalysisResultFiles>
+    <AnalysisResultFile Id="FilesToAnalyze" Location="D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\.sonarqube\conf\3\FilesToAnalyze.txt" />
+  </AnalysisResultFiles>
+  <AnalysisSettings>
+    <Property Name="sonar.cs.roslyn.reportFilePaths">D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\.sonarqube\out\3\Issues.json</Property>
+    <Property Name="sonar.cs.analyzer.projectOutPaths">D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\.sonarqube\out\3</Property>
+    <Property Name="sonar.cs.scanner.telemetry">D:\admin\VisualStudioProjects\C#Projects\FintechSecureVersion\fintech-stats-platform\.sonarqube\out\3\Telemetry.json</Property>
+  </AnalysisSettings>
+  <Configuration>Debug</Configuration>
+  <Platform>AnyCPU</Platform>
+  <TargetFramework>net8.0</TargetFramework>
+</ProjectInfo>

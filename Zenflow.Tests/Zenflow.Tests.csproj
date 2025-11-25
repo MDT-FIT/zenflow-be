@@ -10,7 +10,10 @@
 	<None Include="..\Zenflow\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
   <ItemGroup>
-	<PackageReference Include="coverlet.collector" Version="6.0.0" />
+	<PackageReference Include="coverlet.collector" Version="6.0.4">
+	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  <PrivateAssets>all</PrivateAssets>
+	</PackageReference>
 	<PackageReference Include="FluentAssertions" Version="8.7.1" />
 	<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.6" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.6" />
@@ -37,7 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Update=".env">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>

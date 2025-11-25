@@ -1,3 +1,5 @@
+#pragma warning disable 
+
 using Asp.Versioning.ApiExplorer;
 using DotNetEnv;
 using FintechStatsPlatform.Models;
@@ -9,17 +11,57 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Diagnostics.Tracing;
 using Zenflow.Helpers;
 
 namespace FintechStatsPlatform
 {
     public static class Program
     {
+        public static class AppDiagnostics
+        {
+            public const string SourceName = "Zenflow.Manual";
+            public static System.Diagnostics.ActivitySource ActivitySource = new System.Diagnostics.ActivitySource(SourceName);
+        }
         public static void Main(string[] args)
         {
             Env.Load();
+            Console.WriteLine($"TINK_API_LINK={Environment.GetEnvironmentVariable("TINK_API_LINK")}");
             var builder = WebApplication.CreateBuilder(args);
+
+            // In your Program.cs
+            builder.Services.AddOpenTelemetry()
+                .ConfigureResource(rb => rb.AddService("Zenflow"))
+                .WithTracing(tracing => tracing
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddOtlpExporter(o =>
+                    {
+                        // CHANGE: Replace "localhost" with "127.0.0.1"
+                        o.Endpoint = new Uri("http://127.0.0.1:8300");
+                        o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                    })
+                    .AddZipkinExporter(o => o.Endpoint = new Uri("http://localhost:9411/api/v2/spans"))
+                    .AddSource("Zenflow.Manual")
+                )
+                // Do the same for Metrics if you want them
+                .WithMetrics(metrics => metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddPrometheusExporter()
+                    .AddOtlpExporter(o =>
+                    {
+                        // CHANGE: Replace "localhost" with "127.0.0.1"
+                        o.Endpoint = new Uri("http://127.0.0.1:8300");
+                        o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                    })
+                );
 
             // Database
             builder.Services.AddDbContextPool<FintechContext>(opt =>
@@ -146,26 +188,26 @@ namespace FintechStatsPlatform
             });
 
             var app = builder.Build();
-           // Configure the HTTP request pipeline
+            // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
-              app.UseSwagger();
-              app.UseSwaggerUI(options =>
-              {
-                  // Get service that knows about every version of API
-                  var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
+                    // Get service that knows about every version of API
+                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
-                  // Create one endpoint in Swagger UI for each version
-                  foreach (var description in provider.ApiVersionDescriptions)
-                  {
-                      options.SwaggerEndpoint(
-                          $"/swagger/{description.GroupName}/swagger.json", // Route to the file
-                          description.GroupName.ToUpperInvariant()
-                      );
-                  }
-              });
+                    // Create one endpoint in Swagger UI for each version
+                    foreach (var description in provider.ApiVersionDescriptions)
+                    {
+                        options.SwaggerEndpoint(
+                            $"/swagger/{description.GroupName}/swagger.json", // Route to the file
+                            description.GroupName.ToUpperInvariant()
+                        );
+                    }
+                });
             }
-          
+
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAll");
@@ -201,6 +243,8 @@ namespace FintechStatsPlatform
                     Console.WriteLine("Failed to connect to the database");
                 }
             }
+
+            app.MapPrometheusScrapingEndpoint();
 
             app.Run();
         }

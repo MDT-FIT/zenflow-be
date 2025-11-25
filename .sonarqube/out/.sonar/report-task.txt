@@ -1,0 +1,6 @@
+projectKey=Zenflow
+serverUrl=http://localhost:9000
+serverVersion=25.11.0.114957
+dashboardUrl=http://localhost:9000/dashboard?id=Zenflow
+ceTaskId=b7d7cab7-f49b-4df4-8990-32ad104efdce
+ceTaskUrl=http://localhost:9000/api/ce/task?id=b7d7cab7-f49b-4df4-8990-32ad104efdce
